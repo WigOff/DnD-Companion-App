@@ -1,5 +1,3 @@
-import 'package:flutter/material.dart';
-
 class Player {
   final String? id;
   final String name;
@@ -9,6 +7,7 @@ class Player {
   final int xp;
   final int gold;
   final int pointsleft;
+  final int availablePoints;
   final int health;
   final int maxHealth;
   final int mana;
@@ -31,6 +30,7 @@ class Player {
     required this.xp,
     required this.gold,
     required this.pointsleft,
+    this.availablePoints = 0,
     required this.health,
     required this.maxHealth,
     required this.mana,
@@ -55,6 +55,7 @@ class Player {
       xp: json['xp'],
       gold: json['gold'],
       pointsleft: json['pointsleft'],
+      availablePoints: json['availablePoints'] ?? 0,
       health: json['health'],
       maxHealth: json['maxHealth'],
       mana: json['mana'],
@@ -80,6 +81,7 @@ class Player {
       xp: map['xp'],
       gold: map['gold'],
       pointsleft: map['pointsleft'],
+      availablePoints: map['availablePoints'] ?? 0,
       health: map['health'],
       maxHealth: map['maxHealth'],
       mana: map['mana'],
@@ -105,6 +107,7 @@ class Player {
       'xp': xp,
       'gold': gold,
       'pointsleft': pointsleft,
+      'availablePoints': availablePoints,
       'health': health,
       'maxHealth': maxHealth,
       'mana': mana,
@@ -130,6 +133,7 @@ class Player {
       'xp': xp,
       'gold': gold,
       'pointsleft': pointsleft,
+      'availablePoints': availablePoints,
       'health': health,
       'maxHealth': maxHealth,
       'mana': mana,
@@ -154,6 +158,7 @@ class Player {
     int? xp,
     int? gold,
     int? pointsleft,
+    int? availablePoints,
     int? health,
     int? maxHealth,
     int? mana,
@@ -176,6 +181,7 @@ class Player {
       xp: xp ?? this.xp,
       gold: gold ?? this.gold,
       pointsleft: pointsleft ?? this.pointsleft,
+      availablePoints: availablePoints ?? this.availablePoints,
       health: health ?? this.health,
       maxHealth: maxHealth ?? this.maxHealth,
       mana: mana ?? this.mana,

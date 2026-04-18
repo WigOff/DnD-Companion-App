@@ -8,19 +8,19 @@ import 'package:dnd_app/db/database_helper.dart';
 class PlayerProvider with ChangeNotifier {
   List<Player> _players = [];
   bool _isLoading = false;
-  List<Map<String, dynamic>> _rollLog = [];
+  List<Map<String, dynamic>> _log = [];
 
   final StreamController<Map<String, dynamic>> _rollStreamController =
       StreamController<Map<String, dynamic>>.broadcast();
 
   List<Player> get players => _players;
   bool get isLoading => _isLoading;
-  List<Map<String, dynamic>> get rollLog => _rollLog;
+  List<Map<String, dynamic>> get log => _log;
   Stream<Map<String, dynamic>> get rollStream => _rollStreamController.stream;
 
   PlayerProvider() {
     loadPlayers(); // Load existing data from DB first
-    _initWebSocket(); 
+    _initWebSocket();
   }
 
   void _initWebSocket() {
@@ -31,21 +31,26 @@ class PlayerProvider with ChangeNotifier {
           _players = (data['players'] as List)
               .map((p) => Player.fromJson(p))
               .toList();
-          
+
           // Persist the state to the local database
           await DatabaseHelper.instance.clearAll();
           for (var player in _players) {
             await DatabaseHelper.instance.create(player);
           }
 
-          // Process roll log — emit only new entries to listeners
+          // Process log — emit only new entries to listeners (for animations/fx)
           final incoming = List<Map<String, dynamic>>.from(
-            (data['roll_log'] as List? ?? []).map((e) => Map<String, dynamic>.from(e)),
+            (data['log'] as List? ?? []).map(
+              (e) => Map<String, dynamic>.from(e),
+            ),
           );
-          for (int i = _rollLog.length; i < incoming.length; i++) {
-            _rollStreamController.add(incoming[i]);
+          for (int i = _log.length; i < incoming.length; i++) {
+            final entry = incoming[i];
+            if (entry['category'] == 'dice') {
+              _rollStreamController.add(entry);
+            }
           }
-          _rollLog = incoming;
+          _log = incoming;
 
           _isLoading = false;
           notifyListeners();
@@ -78,31 +83,27 @@ class PlayerProvider with ChangeNotifier {
   /// Sends a roll_dice event to the server.
   /// [playerId] is null for GM rolls.
   void rollDice(String? playerId) {
-    ws.send({
-      'type': 'roll_dice',
-      'playerid': playerId ?? 'gm',
-    });
+    ws.send({'type': 'roll_dice', 'playerid': playerId ?? 'gm'});
+  }
+
+  void levelUp(String playerId) {
+    ws.send({'type': 'level_up', 'playerid': playerId});
+  }
+
+  void allocateStat(String playerId, String statKey) {
+    ws.send({'type': 'allocate_stat', 'playerid': playerId, 'stat': statKey});
   }
 
   Future<void> addPlayer(Player player) async {
-    ws.send({
-      'type': 'addnew',
-      'player': player.toJson(),
-    });
+    ws.send({'type': 'addnew', 'player': player.toJson()});
   }
 
   Future<void> updatePlayer(Player player) async {
-    ws.send({
-      'type': 'update',
-      'player': player.toJson(),
-    });
+    ws.send({'type': 'update', 'player': player.toJson()});
   }
 
   Future<void> deletePlayer(String id) async {
-    ws.send({
-      'type': 'delete',
-      'id': id,
-    });
+    ws.send({'type': 'delete', 'id': id});
   }
 
   @override

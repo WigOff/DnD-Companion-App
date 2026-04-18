@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:dnd_app/models/player.dart';
 import 'package:dnd_app/providers/player_provider.dart';
 import 'package:dnd_app/pages/player_dashboard.dart';
+import 'package:dnd_app/data/class_defaults.dart';
 
 /// Standalone new-player creation form.
 /// After successful creation, navigates to the player's own dashboard.
@@ -16,10 +17,10 @@ class NewPlayerForm extends StatefulWidget {
 
 class _NewPlayerFormState extends State<NewPlayerForm> {
   String name = '';
-  String race = '';
-  String playerClass = '';
+  String race = kAvailableRaces.first;
+  String playerClass = kAvailableClasses.first;
 
-  int str = 0, dex = 0, con = 0, intl = 0, wis = 0, cha = 0;
+  int str = 14, dex = 10, con = 14, intl = 6, wis = 8, cha = 8;
 
   int get pointsAllocated => str + dex + con + intl + wis + cha;
   int get pointsLeft => 60 - pointsAllocated;
@@ -54,6 +55,7 @@ class _NewPlayerFormState extends State<NewPlayerForm> {
       intelligence: intl,
       wisdom: wis,
       charisma: cha,
+      availablePoints: 0,
       proficiencyBonus: 2,
     );
 
@@ -64,8 +66,10 @@ class _NewPlayerFormState extends State<NewPlayerForm> {
       await Future.delayed(const Duration(milliseconds: 600));
 
       // Find the newly created player by name (latest match)
-      final created = provider.players
-          .lastWhere((p) => p.name == newPlayer.name, orElse: () => newPlayer);
+      final created = provider.players.lastWhere(
+        (p) => p.name == newPlayer.name,
+        orElse: () => newPlayer,
+      );
 
       if (mounted) {
         Navigator.pushReplacement(
@@ -80,62 +84,88 @@ class _NewPlayerFormState extends State<NewPlayerForm> {
   }
 
   void _snack(String msg, Color color) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: color),
-    );
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(msg), backgroundColor: color));
   }
 
   Widget _buildStatRow(String label, int value, Function(int) onChanged) {
-    final canIncrease = pointsLeft > 0;
-    final canDecrease = value > 0;
+    // Stats are locked for non-custom classes
+    final isCustom = playerClass == 'Custom';
+    final canIncrease = isCustom && pointsLeft > 0;
+    final canDecrease = isCustom && value > 0;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
         children: [
           Expanded(
-            child: Text(label,
-                style: const TextStyle(fontSize: 15, color: Colors.white70)),
-          ),
-          IconButton(
-            icon: Icon(Icons.remove_circle_outline,
-                color: canDecrease ? Colors.redAccent : Colors.white12),
-            onPressed: canDecrease ? () => setState(() => onChanged(value - 1)) : null,
-          ),
-          SizedBox(
-            width: 32,
             child: Text(
-              '$value',
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                  fontSize: 18, color: Colors.white, fontWeight: FontWeight.bold),
+              label,
+              style: GoogleFonts.cinzel(fontSize: 15, color: Colors.white70),
             ),
           ),
-          IconButton(
-            icon: Icon(Icons.add_circle_outline,
-                color: canIncrease ? Colors.greenAccent : Colors.white12),
-            onPressed:
-                canIncrease ? () => setState(() => onChanged(value + 1)) : null,
-          ),
+          if (isCustom) ...[
+            IconButton(
+              icon: Icon(
+                Icons.remove_circle_outline,
+                color: canDecrease ? Colors.redAccent : Colors.white12,
+              ),
+              onPressed: canDecrease
+                  ? () => setState(() => onChanged(value - 1))
+                  : null,
+            ),
+            SizedBox(
+              width: 32,
+              child: Text(
+                '$value',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.cinzel(
+                  fontSize: 18,
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            IconButton(
+              icon: Icon(
+                Icons.add_circle_outline,
+                color: canIncrease ? Colors.greenAccent : Colors.white12,
+              ),
+              onPressed: canIncrease
+                  ? () => setState(() => onChanged(value + 1))
+                  : null,
+            ),
+          ] else ...[
+            Text(
+              '$value',
+              style: GoogleFonts.cinzel(
+                fontSize: 18,
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+            const SizedBox(width: 12),
+          ],
         ],
       ),
     );
   }
 
   InputDecoration _inputDeco(String label, IconData icon) => InputDecoration(
-        labelText: label,
-        labelStyle: TextStyle(color: Colors.white.withOpacity(0.5)),
-        prefixIcon: Icon(icon, color: Colors.white30, size: 20),
-        filled: true,
-        fillColor: Colors.white.withOpacity(0.06),
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: BorderSide.none,
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(14),
-          borderSide: const BorderSide(color: Colors.deepPurpleAccent, width: 1.5),
-        ),
-      );
+    labelText: label,
+    labelStyle: GoogleFonts.cinzel(color: Colors.white.withOpacity(0.5)),
+    prefixIcon: Icon(icon, color: Colors.white30, size: 20),
+    filled: true,
+    fillColor: Colors.white.withOpacity(0.06),
+    border: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: BorderSide.none,
+    ),
+    focusedBorder: OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: const BorderSide(color: Colors.deepPurpleAccent, width: 1.5),
+    ),
+  );
 
   @override
   Widget build(BuildContext context) {
@@ -150,7 +180,10 @@ class _NewPlayerFormState extends State<NewPlayerForm> {
         ),
         title: Text(
           'Create Character',
-          style: GoogleFonts.cinzel(color: Colors.white, fontWeight: FontWeight.bold),
+          style: GoogleFonts.cinzel(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
       body: SingleChildScrollView(
@@ -162,21 +195,42 @@ class _NewPlayerFormState extends State<NewPlayerForm> {
             _sectionHeader('Identity', Icons.badge_outlined),
             const SizedBox(height: 12),
             TextField(
-              style: const TextStyle(color: Colors.white),
+              style: GoogleFonts.cinzel(color: Colors.white, fontSize: 13),
               decoration: _inputDeco('Player Name', Icons.person_outline),
               onChanged: (v) => name = v,
             ),
             const SizedBox(height: 12),
-            TextField(
-              style: const TextStyle(color: Colors.white),
+            DropdownButtonFormField<String>(
+              initialValue: race,
+              dropdownColor: const Color(0xFF1A0A2E),
+              style: GoogleFonts.cinzel(color: Colors.white, fontSize: 13),
               decoration: _inputDeco('Race', Icons.face),
-              onChanged: (v) => race = v,
+              items: kAvailableRaces
+                  .map((r) => DropdownMenuItem(value: r, child: Text(r)))
+                  .toList(),
+              onChanged: (v) => setState(() => race = v!),
             ),
             const SizedBox(height: 12),
-            TextField(
-              style: const TextStyle(color: Colors.white),
+            DropdownButtonFormField<String>(
+              initialValue: playerClass,
+              dropdownColor: const Color(0xFF1A0A2E),
+              style: GoogleFonts.cinzel(color: Colors.white, fontSize: 13),
               decoration: _inputDeco('Class', Icons.star_outline),
-              onChanged: (v) => playerClass = v,
+              items: kAvailableClasses
+                  .map((c) => DropdownMenuItem(value: c, child: Text(c)))
+                  .toList(),
+              onChanged: (v) {
+                setState(() {
+                  playerClass = v!;
+                  final defaults = kClassDefaults[v]!;
+                  str = defaults['strength']!;
+                  dex = defaults['dexterity']!;
+                  con = defaults['constitution']!;
+                  intl = defaults['intelligence']!;
+                  wis = defaults['wisdom']!;
+                  cha = defaults['charisma']!;
+                });
+              },
             ),
 
             const SizedBox(height: 28),
@@ -187,7 +241,10 @@ class _NewPlayerFormState extends State<NewPlayerForm> {
                 _sectionHeader('Stats', Icons.bar_chart),
                 const Spacer(),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
                   decoration: BoxDecoration(
                     color: pointsLeft > 0
                         ? Colors.deepPurpleAccent.withOpacity(0.2)
@@ -201,22 +258,24 @@ class _NewPlayerFormState extends State<NewPlayerForm> {
                   ),
                   child: Text(
                     '$pointsLeft pts left',
-                    style: TextStyle(
+                    style: GoogleFonts.cinzel(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: pointsLeft > 0 ? Colors.deepPurpleAccent : Colors.redAccent,
+                      color: pointsLeft > 0
+                          ? Colors.deepPurpleAccent
+                          : Colors.redAccent,
                     ),
                   ),
                 ),
               ],
             ),
             const SizedBox(height: 8),
-            _buildStatRow('Strength',     str,  (v) => str  = v),
-            _buildStatRow('Dexterity',    dex,  (v) => dex  = v),
-            _buildStatRow('Constitution', con,  (v) => con  = v),
+            _buildStatRow('Strength', str, (v) => str = v),
+            _buildStatRow('Dexterity', dex, (v) => dex = v),
+            _buildStatRow('Constitution', con, (v) => con = v),
             _buildStatRow('Intelligence', intl, (v) => intl = v),
-            _buildStatRow('Wisdom',       wis,  (v) => wis  = v),
-            _buildStatRow('Charisma',     cha,  (v) => cha  = v),
+            _buildStatRow('Wisdom', wis, (v) => wis = v),
+            _buildStatRow('Charisma', cha, (v) => cha = v),
 
             const SizedBox(height: 32),
 
@@ -228,7 +287,9 @@ class _NewPlayerFormState extends State<NewPlayerForm> {
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.deepPurple,
                   foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
                   elevation: 8,
                 ),
                 onPressed: _isSubmitting ? null : _submit,
@@ -237,12 +298,16 @@ class _NewPlayerFormState extends State<NewPlayerForm> {
                         height: 22,
                         width: 22,
                         child: CircularProgressIndicator(
-                            color: Colors.white, strokeWidth: 2),
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
                       )
                     : Text(
                         'Enter the Realm',
                         style: GoogleFonts.cinzel(
-                            fontSize: 15, fontWeight: FontWeight.bold),
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
               ),
             ),

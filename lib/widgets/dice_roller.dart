@@ -18,11 +18,7 @@ class DiceRoller extends StatefulWidget {
   final String? playerId;
   final String displayName;
 
-  const DiceRoller({
-    super.key,
-    this.playerId,
-    required this.displayName,
-  });
+  const DiceRoller({super.key, this.playerId, required this.displayName});
 
   @override
   State<DiceRoller> createState() => _DiceRollerState();
@@ -64,9 +60,10 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
       vsync: this,
       duration: const Duration(milliseconds: 300),
     );
-    _pulseAnim = Tween<double>(begin: 0.95, end: 1.05).animate(
-      CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut),
-    );
+    _pulseAnim = Tween<double>(
+      begin: 0.95,
+      end: 1.05,
+    ).animate(CurvedAnimation(parent: _pulseCtrl, curve: Curves.easeInOut));
 
     _revealCtrl = AnimationController(
       vsync: this,
@@ -96,8 +93,9 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
     // Subscribe to roll results after the first frame so the Provider is ready.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
-        _rollSub =
-            context.read<PlayerProvider>().rollStream.listen(_onRollResult);
+        _rollSub = context.read<PlayerProvider>().rollStream.listen(
+          _onRollResult,
+        );
       }
     });
   }
@@ -118,9 +116,11 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
   /// Called by the stream when the server sends back the result for THIS player.
   void _onRollResult(Map<String, dynamic> roll) {
     if (!_isRolling || !mounted) return;
+    if (roll['category'] != 'dice') return;
+
     final pid = roll['playerid'] as String? ?? '';
     final myPid = widget.playerId ?? 'gm';
-    if (pid == myPid) {
+    if (pid == myPid && roll.containsKey('result')) {
       _stopRolling(roll['result'] as int);
     }
   }
@@ -226,13 +226,30 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
 
   List<BoxShadow> get _glow {
     if (_result == 20) {
-      return [BoxShadow(color: Colors.amber.withOpacity(0.55), blurRadius: 32, spreadRadius: 6)];
+      return [
+        BoxShadow(
+          color: Colors.amber.withOpacity(0.55),
+          blurRadius: 32,
+          spreadRadius: 6,
+        ),
+      ];
     }
     if (_result == 1) {
-      return [BoxShadow(color: Colors.red.withOpacity(0.55), blurRadius: 32, spreadRadius: 6)];
+      return [
+        BoxShadow(
+          color: Colors.red.withOpacity(0.55),
+          blurRadius: 32,
+          spreadRadius: 6,
+        ),
+      ];
     }
     if (_isRolling) {
-      return [BoxShadow(color: Colors.deepPurpleAccent.withOpacity(0.4), blurRadius: 20)];
+      return [
+        BoxShadow(
+          color: Colors.deepPurpleAccent.withOpacity(0.4),
+          blurRadius: 20,
+        ),
+      ];
     }
     return [];
   }
@@ -296,7 +313,11 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
 
               // ── Die face ────────────────────────────────────────────────
               AnimatedBuilder(
-                animation: Listenable.merge([_pulseCtrl, _revealCtrl, _shakeCtrl]),
+                animation: Listenable.merge([
+                  _pulseCtrl,
+                  _revealCtrl,
+                  _shakeCtrl,
+                ]),
                 builder: (context, _) {
                   // Scale depends on current phase
                   double scale = 1.0;
@@ -349,10 +370,15 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
                         style: GoogleFonts.cinzel(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
-                          color: _result == 20 ? Colors.amber : Colors.redAccent,
+                          color: _result == 20
+                              ? Colors.amber
+                              : Colors.redAccent,
                         ),
                       )
-                    : SizedBox(key: const ValueKey('empty'), height: _result != null ? 0 : 20),
+                    : SizedBox(
+                        key: const ValueKey('empty'),
+                        height: _result != null ? 0 : 20,
+                      ),
               ),
 
               const SizedBox(height: 16),
@@ -362,7 +388,10 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
                 onTap: _isRolling ? null : _startRoll,
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 40,
+                    vertical: 15,
+                  ),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: _isRolling

@@ -50,7 +50,7 @@ class HomeScreen extends StatelessWidget {
                         ),
                         Text(
                           'Real-time tabletop companion',
-                          style: TextStyle(
+                          style: GoogleFonts.cinzel(
                             fontSize: 12,
                             color: Colors.white.withOpacity(0.5),
                           ),
@@ -73,7 +73,7 @@ class HomeScreen extends StatelessWidget {
                 const SizedBox(height: 12),
                 Text(
                   'Step into the realm. Will you lead or follow?',
-                  style: TextStyle(
+                  style: GoogleFonts.cinzel(
                     fontSize: 15,
                     color: Colors.white.withOpacity(0.5),
                   ),
@@ -172,7 +172,7 @@ class _HomeButton extends StatelessWidget {
                 ),
                 Text(
                   subtitle,
-                  style: TextStyle(
+                  style: GoogleFonts.cinzel(
                     fontSize: 13,
                     color: Colors.white.withOpacity(0.65),
                   ),

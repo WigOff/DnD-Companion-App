@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:dnd_app/models/player.dart';
 import 'package:dnd_app/providers/player_provider.dart';
@@ -20,7 +21,7 @@ class _PlayerViewState extends State<PlayerView> {
   String name = '';
   String race = '';
   String playerClass = '';
-  
+
   int str = 0;
   int dex = 0;
   int con = 0;
@@ -79,7 +80,7 @@ class _PlayerViewState extends State<PlayerView> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: const TextStyle(fontSize: 16)),
+          Text(label, style: GoogleFonts.cinzel(fontSize: 16)),
           Row(
             children: [
               IconButton(
@@ -88,7 +89,11 @@ class _PlayerViewState extends State<PlayerView> {
               ),
               SizedBox(
                 width: 30,
-                child: Text('$value', textAlign: TextAlign.center, style: const TextStyle(fontSize: 18)),
+                child: Text(
+                  '$value',
+                  textAlign: TextAlign.center,
+                  style: GoogleFonts.cinzel(fontSize: 18),
+                ),
               ),
               IconButton(
                 icon: const Icon(Icons.add),
@@ -135,21 +140,47 @@ class _PlayerViewState extends State<PlayerView> {
               ),
               const SizedBox(height: 24),
               Text(
-                'Assign Stats (Points Left: $pointsLeft)', 
-                style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.deepPurple)
+                'Assign Stats (Points Left: $pointsLeft)',
+                style: const TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.deepPurple,
+                ),
               ),
               const SizedBox(height: 16),
-              _buildStatRow('Strength', str, (val) => setState(() => str = val)),
-              _buildStatRow('Dexterity', dex, (val) => setState(() => dex = val)),
-              _buildStatRow('Constitution', con, (val) => setState(() => con = val)),
-              _buildStatRow('Intelligence', intl, (val) => setState(() => intl = val)),
+              _buildStatRow(
+                'Strength',
+                str,
+                (val) => setState(() => str = val),
+              ),
+              _buildStatRow(
+                'Dexterity',
+                dex,
+                (val) => setState(() => dex = val),
+              ),
+              _buildStatRow(
+                'Constitution',
+                con,
+                (val) => setState(() => con = val),
+              ),
+              _buildStatRow(
+                'Intelligence',
+                intl,
+                (val) => setState(() => intl = val),
+              ),
               _buildStatRow('Wisdom', wis, (val) => setState(() => wis = val)),
-              _buildStatRow('Charisma', cha, (val) => setState(() => cha = val)),
+              _buildStatRow(
+                'Charisma',
+                cha,
+                (val) => setState(() => cha = val),
+              ),
               const SizedBox(height: 32),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(padding: const EdgeInsets.all(16)),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.all(16),
+                  ),
                   onPressed: () async {
                     try {
                       await _createNewPlayer();
@@ -158,9 +189,18 @@ class _PlayerViewState extends State<PlayerView> {
                           isCreating = false;
                         });
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(
-                            content: Text('Player created securely in the realm!'),
-                            backgroundColor: Colors.green,
+                          SnackBar(
+                            content: Text(
+                              'Player created securely in the realm!',
+                              style: GoogleFonts.cinzel(color: Colors.white),
+                            ),
+                            backgroundColor: Colors.green.withValues(
+                              alpha: 0.8,
+                            ),
+                            behavior: SnackBarBehavior.floating,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
                           ),
                         );
                       }
@@ -168,16 +208,22 @@ class _PlayerViewState extends State<PlayerView> {
                       if (mounted) {
                         ScaffoldMessenger.of(context).showSnackBar(
                           SnackBar(
-                            content: Text('Failed to create player: $e'),
+                            content: Text(
+                              'Failed to create player: $e',
+                              style: GoogleFonts.cinzel(),
+                            ),
                             backgroundColor: Colors.red,
                           ),
                         );
                       }
                     }
                   },
-                  child: const Text('Complete Character Creation', style: TextStyle(fontSize: 16)),
+                  child: const Text(
+                    'Complete Character Creation',
+                    style: TextStyle(fontSize: 16),
+                  ),
                 ),
-              )
+              ),
             ],
           ),
         ),
@@ -232,68 +278,146 @@ class _PlayerViewState extends State<PlayerView> {
             ),
             const SizedBox(height: 24),
             if (fetchError != null)
-               Text(fetchError!, style: const TextStyle(color: Colors.red, fontSize: 16)),
+              Text(
+                fetchError!,
+                style: const TextStyle(color: Colors.red, fontSize: 16),
+              ),
             if (loadedPlayer != null)
-               Expanded(
-                 child: SingleChildScrollView(
-                   child: Card(
-                     elevation: 4,
-                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                     child: Padding(
-                       padding: const EdgeInsets.all(20),
-                       child: Column(
-                         crossAxisAlignment: CrossAxisAlignment.stretch,
-                         children: [
-                           Text(loadedPlayer!.name, style: const TextStyle(fontSize: 28, fontWeight: FontWeight.bold, color: Colors.deepPurple)),
-                           Text('Player ID: #${loadedPlayer!.id}', style: const TextStyle(color: Colors.grey)),
-                           const Divider(height: 32, thickness: 1),
-                           
-                           Row(
-                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                             children: [
-                               Text('Class: ${loadedPlayer!.playerClass}', style: const TextStyle(fontSize: 16)),
-                               Text('Race: ${loadedPlayer!.race}', style: const TextStyle(fontSize: 16)),
-                             ],
-                           ),
-                           const SizedBox(height: 12),
-                           Row(
-                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                             children: [
-                               Text('Level: ${loadedPlayer!.level}', style: const TextStyle(fontSize: 16)),
-                               Text('XP: ${loadedPlayer!.xp} / ${loadedPlayer!.level * 10}', style: const TextStyle(fontSize: 16)),
-                             ],
-                           ),
-                           const SizedBox(height: 12),
-                           Text('HP: ${loadedPlayer!.health} / ${loadedPlayer!.maxHealth}', style: const TextStyle(fontSize: 16, color: Colors.red)),
-                           const SizedBox(height: 8),
-                           Text('MP: ${loadedPlayer!.mana} / ${loadedPlayer!.maxMana}', style: const TextStyle(fontSize: 16, color: Colors.blue)),
-                           const SizedBox(height: 8),
-                           Text('Gold: ${loadedPlayer!.gold}', style: const TextStyle(fontSize: 16, color: Colors.amber)),
-                           const SizedBox(height: 8),
-                           Text('Armor Class: ${loadedPlayer!.armorClass}', style: const TextStyle(fontSize: 16)),
-                           
-                           const Divider(height: 32, thickness: 1),
-                           const Text('Base Stats', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-                           const SizedBox(height: 12),
-                           Text('Strength: ${loadedPlayer!.strength}', style: const TextStyle(fontSize: 16)),
-                           const SizedBox(height: 4),
-                           Text('Dexterity: ${loadedPlayer!.dexterity}', style: const TextStyle(fontSize: 16)),
-                           const SizedBox(height: 4),
-                           Text('Constitution: ${loadedPlayer!.constitution}', style: const TextStyle(fontSize: 16)),
-                           const SizedBox(height: 4),
-                           Text('Intelligence: ${loadedPlayer!.intelligence}', style: const TextStyle(fontSize: 16)),
-                           const SizedBox(height: 4),
-                           Text('Wisdom: ${loadedPlayer!.wisdom}', style: const TextStyle(fontSize: 16)),
-                           const SizedBox(height: 4),
-                           Text('Charisma: ${loadedPlayer!.charisma}', style: const TextStyle(fontSize: 16)),
-                           const Divider(height: 32, thickness: 1),
-                           Text('Proficiency Bonus: +${loadedPlayer!.proficiencyBonus}', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                         ],
-                       ),
-                     ),
-                   ),
-                 ),
-               ),
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Card(
+                    elevation: 4,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Text(
+                            loadedPlayer!.name,
+                            style: const TextStyle(
+                              fontSize: 28,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.deepPurple,
+                            ),
+                          ),
+                          Text(
+                            'Player ID: #${loadedPlayer!.id}',
+                            style: const TextStyle(color: Colors.grey),
+                          ),
+                          const Divider(height: 32, thickness: 1),
+
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Class: ${loadedPlayer!.playerClass}',
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                              Text(
+                                'Race: ${loadedPlayer!.race}',
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'Level: ${loadedPlayer!.level}',
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                              Text(
+                                'XP: ${loadedPlayer!.xp} / ${loadedPlayer!.level * 10}',
+                                style: const TextStyle(fontSize: 16),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'HP: ${loadedPlayer!.health} / ${loadedPlayer!.maxHealth}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.red,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'MP: ${loadedPlayer!.mana} / ${loadedPlayer!.maxMana}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.blue,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Gold: ${loadedPlayer!.gold}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              color: Colors.amber,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Armor Class: ${loadedPlayer!.armorClass}',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+
+                          const Divider(height: 32, thickness: 1),
+                          const Text(
+                            'Base Stats',
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 12),
+                          Text(
+                            'Strength: ${loadedPlayer!.strength}',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Dexterity: ${loadedPlayer!.dexterity}',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Constitution: ${loadedPlayer!.constitution}',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Intelligence: ${loadedPlayer!.intelligence}',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Wisdom: ${loadedPlayer!.wisdom}',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Charisma: ${loadedPlayer!.charisma}',
+                            style: const TextStyle(fontSize: 16),
+                          ),
+                          const Divider(height: 32, thickness: 1),
+                          Text(
+                            'Proficiency Bonus: +${loadedPlayer!.proficiencyBonus}',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
           ],
         ),
       ),

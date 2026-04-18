@@ -18,11 +18,11 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
-    return await openDatabase(path, version: 3, onCreate: _createDB, onUpgrade: _onUpgrade);
+    return await openDatabase(path, version: 4, onCreate: _createDB, onUpgrade: _onUpgrade);
   }
 
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 3) {
+    if (oldVersion < 4) {
       await db.execute('DROP TABLE IF EXISTS players');
       await _createDB(db, newVersion);
     }
@@ -39,6 +39,7 @@ class DatabaseHelper {
         xp INTEGER NOT NULL,
         gold INTEGER NOT NULL,
         pointsleft INTEGER NOT NULL,
+        availablePoints INTEGER NOT NULL,
         health INTEGER NOT NULL,
         maxHealth INTEGER NOT NULL,
         mana INTEGER NOT NULL,

@@ -47,7 +47,7 @@ class _JoinGameState extends State<JoinGame> {
             const SizedBox(height: 8),
             Text(
               'Choose how you want to enter the session.',
-              style: TextStyle(fontSize: 15, color: Colors.white.withOpacity(0.5)),
+              style: GoogleFonts.cinzel(fontSize: 15, color: Colors.white.withOpacity(0.5)),
             ),
             const SizedBox(height: 48),
 
@@ -142,7 +142,7 @@ class _JoinOptionCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.55)),
+                    style: GoogleFonts.cinzel(fontSize: 13, color: Colors.white.withOpacity(0.55)),
                   ),
                 ],
               ),
@@ -228,17 +228,17 @@ class _ExistingPlayerSheetState extends State<_ExistingPlayerSheet> {
                     const SizedBox(height: 4),
                     Text(
                       'Search by name to find your character.',
-                      style: TextStyle(fontSize: 13, color: Colors.white.withOpacity(0.45)),
+                      style: GoogleFonts.cinzel(fontSize: 13, color: Colors.white.withOpacity(0.55)),
                     ),
                     const SizedBox(height: 16),
                     // Search bar
                     TextField(
                       controller: _controller,
                       autofocus: true,
-                      style: const TextStyle(color: Colors.white),
+                      style: GoogleFonts.cinzel(color: Colors.white, fontSize: 13),
                       decoration: InputDecoration(
                         hintText: 'Search players...',
-                        hintStyle: TextStyle(color: Colors.white.withOpacity(0.35)),
+                        hintStyle: GoogleFonts.cinzel(color: Colors.white.withOpacity(0.35), fontSize: 13),
                         prefixIcon: Icon(Icons.search, color: Colors.white.withOpacity(0.5)),
                         filled: true,
                         fillColor: Colors.white.withOpacity(0.07),
@@ -318,7 +318,7 @@ class _PlayerSearchTile extends StatelessWidget {
               backgroundColor: Colors.deepPurple.withOpacity(0.4),
               child: Text(
                 player.name.isNotEmpty ? player.name[0].toUpperCase() : '?',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                style: GoogleFonts.cinzel(color: Colors.white, fontWeight: FontWeight.bold),
               ),
             ),
             const SizedBox(width: 14),
@@ -328,11 +328,11 @@ class _PlayerSearchTile extends StatelessWidget {
                 children: [
                   Text(
                     player.name,
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w600, fontSize: 15),
+                    style: GoogleFonts.cinzel(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
                   ),
                   Text(
                     '${player.race} · ${player.playerClass} · Lvl ${player.level}',
-                    style: TextStyle(color: Colors.white.withOpacity(0.45), fontSize: 12),
+                    style: GoogleFonts.cinzel(color: Colors.white.withOpacity(0.45), fontSize: 12),
                   ),
                 ],
               ),

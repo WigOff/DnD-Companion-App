@@ -7,7 +7,8 @@ class WebSocketService {
 
   void connect({int port = 8000}) {
     _channel = WebSocketChannel.connect(
-      Uri.parse('ws://192.168.137.1:$port/ws'),
+      Uri.parse('wss://dnd-companion-app.onrender.com/ws'),
+      // Uri.parse('ws://192.168.137.1:8000/ws'),
     );
     // Cache once — all listeners share this single broadcast stream
     _broadcastStream = _channel.stream.asBroadcastStream();

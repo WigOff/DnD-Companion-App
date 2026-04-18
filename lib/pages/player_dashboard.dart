@@ -50,10 +50,14 @@ class PlayerDashboard extends StatelessWidget {
                         const SizedBox(height: 40),
                         CircleAvatar(
                           radius: 38,
-                          backgroundColor: Colors.deepPurple.withOpacity(0.5),
+                          backgroundColor: Colors.deepPurple.withValues(
+                            alpha: 0.5,
+                          ),
                           child: Text(
-                            live.name.isNotEmpty ? live.name[0].toUpperCase() : '?',
-                            style: const TextStyle(
+                            live.name.isNotEmpty
+                                ? live.name[0].toUpperCase()
+                                : '?',
+                            style: GoogleFonts.cinzel(
                               fontSize: 32,
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -71,9 +75,9 @@ class PlayerDashboard extends StatelessWidget {
                         ),
                         Text(
                           '${live.race}  ·  ${live.playerClass}  ·  Level ${live.level}',
-                          style: TextStyle(
+                          style: GoogleFonts.cinzel(
                             fontSize: 13,
-                            color: Colors.white.withOpacity(0.55),
+                            color: Colors.white.withValues(alpha: 0.55),
                           ),
                         ),
                       ],
@@ -94,23 +98,89 @@ class PlayerDashboard extends StatelessWidget {
                     // Vital stats
                     Row(
                       children: [
-                        Expanded(child: _VitalCard(label: 'HP', current: live.health, max: live.maxHealth, color: Colors.redAccent)),
+                        Expanded(
+                          child: _VitalCard(
+                            label: 'HP',
+                            current: live.health,
+                            max: live.maxHealth,
+                            color: Colors.redAccent,
+                          ),
+                        ),
                         const SizedBox(width: 12),
-                        Expanded(child: _VitalCard(label: 'MP', current: live.mana, max: live.maxMana, color: Colors.blueAccent)),
+                        Expanded(
+                          child: _VitalCard(
+                            label: 'MP',
+                            current: live.mana,
+                            max: live.maxMana,
+                            color: Colors.blueAccent,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        Expanded(child: _StatChip(label: 'Gold', value: '${live.gold}', icon: Icons.monetization_on, color: Colors.amber)),
+                        Expanded(
+                          child: _StatChip(
+                            label: 'Gold',
+                            value: '${live.gold}',
+                            icon: Icons.monetization_on,
+                            color: Colors.amber,
+                          ),
+                        ),
                         const SizedBox(width: 12),
-                        Expanded(child: _StatChip(label: 'Armor Class', value: '${live.armorClass}', icon: Icons.shield, color: Colors.tealAccent)),
+                        Expanded(
+                          child: _StatChip(
+                            label: 'Armor Class',
+                            value: '${live.armorClass}',
+                            icon: Icons.shield,
+                            color: Colors.tealAccent,
+                          ),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 24),
 
                     // Ability scores
-                    _SectionTitle('Ability Scores'),
+                    Row(
+                      children: [
+                        _SectionTitle('Ability Scores'),
+                        const SizedBox(width: 8),
+                        if (live.availablePoints > 0)
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 10,
+                              vertical: 4,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.blueAccent.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: Colors.blueAccent.withValues(alpha: 0.5),
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Icon(
+                                  Icons.stars,
+                                  color: Colors.blueAccent,
+                                  size: 14,
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  '${live.availablePoints} PTS AVAILABLE',
+                                  style: const TextStyle(
+                                    color: Colors.blueAccent,
+                                    fontSize: 10,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                      ],
+                    ),
                     const SizedBox(height: 12),
                     GridView.count(
                       crossAxisCount: 3,
@@ -118,14 +188,50 @@ class PlayerDashboard extends StatelessWidget {
                       physics: const NeverScrollableScrollPhysics(),
                       mainAxisSpacing: 10,
                       crossAxisSpacing: 10,
-                      childAspectRatio: 1.3,
+                      childAspectRatio: 1.1,
                       children: [
-                        _AbilityScore(abbr: 'STR', value: live.strength),
-                        _AbilityScore(abbr: 'DEX', value: live.dexterity),
-                        _AbilityScore(abbr: 'CON', value: live.constitution),
-                        _AbilityScore(abbr: 'INT', value: live.intelligence),
-                        _AbilityScore(abbr: 'WIS', value: live.wisdom),
-                        _AbilityScore(abbr: 'CHA', value: live.charisma),
+                        _AbilityScore(
+                          abbr: 'STR',
+                          value: live.strength,
+                          playerId: live.id!,
+                          statKey: 'strength',
+                          canIncrease: live.availablePoints > 0,
+                        ),
+                        _AbilityScore(
+                          abbr: 'DEX',
+                          value: live.dexterity,
+                          playerId: live.id!,
+                          statKey: 'dexterity',
+                          canIncrease: live.availablePoints > 0,
+                        ),
+                        _AbilityScore(
+                          abbr: 'CON',
+                          value: live.constitution,
+                          playerId: live.id!,
+                          statKey: 'constitution',
+                          canIncrease: live.availablePoints > 0,
+                        ),
+                        _AbilityScore(
+                          abbr: 'INT',
+                          value: live.intelligence,
+                          playerId: live.id!,
+                          statKey: 'intelligence',
+                          canIncrease: live.availablePoints > 0,
+                        ),
+                        _AbilityScore(
+                          abbr: 'WIS',
+                          value: live.wisdom,
+                          playerId: live.id!,
+                          statKey: 'wisdom',
+                          canIncrease: live.availablePoints > 0,
+                        ),
+                        _AbilityScore(
+                          abbr: 'CHA',
+                          value: live.charisma,
+                          playerId: live.id!,
+                          statKey: 'charisma',
+                          canIncrease: live.availablePoints > 0,
+                        ),
                       ],
                     ),
                     const SizedBox(height: 20),
@@ -134,15 +240,15 @@ class PlayerDashboard extends StatelessWidget {
                     _SectionTitle('Combat'),
                     const SizedBox(height: 12),
                     _InfoRow('Proficiency Bonus', '+${live.proficiencyBonus}'),
-                    _InfoRow('XP to next level', '${(live.level * 10) - live.xp} xp'),
+                    _InfoRow(
+                      'XP to next level',
+                      '${(live.level * 10) - live.xp} xp',
+                    ),
 
                     // ── Dice roller ────────────────────────────────────
                     const SizedBox(height: 24),
                     const Divider(color: Colors.white12, height: 1),
-                    DiceRoller(
-                      playerId: live.id,
-                      displayName: live.name,
-                    ),
+                    DiceRoller(playerId: live.id, displayName: live.name),
 
                     // ── Combat log ─────────────────────────────────────
                     const Divider(color: Colors.white12, height: 1),
@@ -172,9 +278,9 @@ class _XpBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
+        color: Colors.white.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -182,8 +288,17 @@ class _XpBar extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Level $level', style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)),
-              Text('$xp / $needed XP', style: const TextStyle(color: Colors.white38, fontSize: 12)),
+              Text(
+                'Level $level',
+                style: GoogleFonts.cinzel(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              Text(
+                '$xp / $needed XP',
+                style: GoogleFonts.cinzel(color: Colors.white38, fontSize: 12),
+              ),
             ],
           ),
           const SizedBox(height: 8),
@@ -193,7 +308,9 @@ class _XpBar extends StatelessWidget {
               value: progress,
               minHeight: 8,
               backgroundColor: Colors.white10,
-              valueColor: const AlwaysStoppedAnimation<Color>(Colors.deepPurpleAccent),
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                Colors.deepPurpleAccent,
+              ),
             ),
           ),
         ],
@@ -206,7 +323,12 @@ class _VitalCard extends StatelessWidget {
   final String label;
   final int current, max;
   final Color color;
-  const _VitalCard({required this.label, required this.current, required this.max, required this.color});
+  const _VitalCard({
+    required this.label,
+    required this.current,
+    required this.max,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -214,18 +336,29 @@ class _VitalCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.08),
+        color: color.withValues(alpha: 0.08),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withOpacity(0.25)),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: TextStyle(color: color, fontWeight: FontWeight.bold, fontSize: 13)),
+          Text(
+            label,
+            style: GoogleFonts.cinzel(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
           const SizedBox(height: 6),
           Text(
             '$current / $max',
-            style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+            style: GoogleFonts.cinzel(
+              color: Colors.white,
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           const SizedBox(height: 8),
           ClipRRect(
@@ -247,16 +380,21 @@ class _StatChip extends StatelessWidget {
   final String label, value;
   final IconData icon;
   final Color color;
-  const _StatChip({required this.label, required this.value, required this.icon, required this.color});
+  const _StatChip({
+    required this.label,
+    required this.value,
+    required this.icon,
+    required this.color,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.07),
+        color: color.withValues(alpha: 0.07),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withOpacity(0.2)),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -265,8 +403,21 @@ class _StatChip extends StatelessWidget {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(label, style: TextStyle(color: Colors.white.withOpacity(0.45), fontSize: 11)),
-              Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+              Text(
+                label,
+                style: GoogleFonts.cinzel(
+                  color: Colors.white.withValues(alpha: 0.45),
+                  fontSize: 11,
+                ),
+              ),
+              Text(
+                value,
+                style: GoogleFonts.cinzel(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                ),
+              ),
             ],
           ),
         ],
@@ -278,7 +429,17 @@ class _StatChip extends StatelessWidget {
 class _AbilityScore extends StatelessWidget {
   final String abbr;
   final int value;
-  const _AbilityScore({required this.abbr, required this.value});
+  final String playerId;
+  final String statKey;
+  final bool canIncrease;
+
+  const _AbilityScore({
+    required this.abbr,
+    required this.value,
+    required this.playerId,
+    required this.statKey,
+    required this.canIncrease,
+  });
 
   int get _modifier => ((value - 10) / 2).floor();
 
@@ -286,22 +447,70 @@ class _AbilityScore extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.04),
+        color: Colors.white.withValues(alpha: 0.04),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withOpacity(0.08)),
+        border: Border.all(
+          color: canIncrease
+              ? Colors.blueAccent.withValues(alpha: 0.3)
+              : Colors.white.withValues(alpha: 0.08),
+        ),
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
+      child: Stack(
         children: [
-          Text(abbr, style: const TextStyle(color: Colors.white38, fontSize: 11, fontWeight: FontWeight.bold)),
-          Text('$value', style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
-          Text(
-            _modifier >= 0 ? '+$_modifier' : '$_modifier',
-            style: TextStyle(
-              color: _modifier >= 0 ? Colors.greenAccent : Colors.redAccent,
-              fontSize: 12,
+          Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  abbr,
+                  style: GoogleFonts.cinzel(
+                    color: Colors.white38,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  '$value',
+                  style: GoogleFonts.cinzel(
+                    color: Colors.white,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  _modifier >= 0 ? '+$_modifier' : '$_modifier',
+                  style: GoogleFonts.cinzel(
+                    color: _modifier >= 0
+                        ? Colors.greenAccent
+                        : Colors.redAccent,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
             ),
           ),
+          if (canIncrease)
+            Positioned(
+              right: 0,
+              top: 0,
+              child: GestureDetector(
+                onTap: () => context.read<PlayerProvider>().allocateStat(
+                  playerId,
+                  statKey,
+                ),
+                child: Container(
+                  padding: const EdgeInsets.all(4),
+                  decoration: const BoxDecoration(
+                    color: Colors.blueAccent,
+                    borderRadius: BorderRadius.only(
+                      topRight: Radius.circular(11),
+                      bottomLeft: Radius.circular(12),
+                    ),
+                  ),
+                  child: const Icon(Icons.add, size: 14, color: Colors.white),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -314,13 +523,13 @@ class _SectionTitle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Text(
-        title,
-        style: GoogleFonts.cinzel(
-          fontSize: 15,
-          color: Colors.white54,
-          fontWeight: FontWeight.bold,
-        ),
-      );
+    title,
+    style: GoogleFonts.cinzel(
+      fontSize: 15,
+      color: Colors.white54,
+      fontWeight: FontWeight.bold,
+    ),
+  );
 }
 
 class _InfoRow extends StatelessWidget {
@@ -334,8 +543,21 @@ class _InfoRow extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label, style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 14)),
-          Text(value, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+          Text(
+            label,
+            style: GoogleFonts.cinzel(
+              color: Colors.white.withValues(alpha: 0.5),
+              fontSize: 14,
+            ),
+          ),
+          Text(
+            value,
+            style: GoogleFonts.cinzel(
+              color: Colors.white,
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ],
       ),
     );

@@ -38,7 +38,7 @@ class _CombatLogState extends State<CombatLog> {
   Widget build(BuildContext context) {
     return Consumer<PlayerProvider>(
       builder: (context, provider, _) {
-        final log = provider.rollLog;
+        final log = provider.log;
         if (log.isNotEmpty) _scrollToBottom();
 
         return Column(
@@ -49,10 +49,14 @@ class _CombatLogState extends State<CombatLog> {
               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
               child: Row(
                 children: [
-                  const Icon(Icons.history_edu, color: Colors.white30, size: 16),
+                  const Icon(
+                    Icons.history_edu,
+                    color: Colors.white30,
+                    size: 16,
+                  ),
                   const SizedBox(width: 8),
                   Text(
-                    'COMBAT LOG',
+                    'SESSION LOG',
                     style: GoogleFonts.cinzel(
                       fontSize: 11,
                       letterSpacing: 2.5,
@@ -62,7 +66,7 @@ class _CombatLogState extends State<CombatLog> {
                   ),
                   const Spacer(),
                   Text(
-                    '${log.length} roll${log.length == 1 ? '' : 's'}',
+                    '${log.length} event${log.length == 1 ? '' : 's'}',
                     style: const TextStyle(color: Colors.white24, fontSize: 11),
                   ),
                 ],
@@ -76,8 +80,11 @@ class _CombatLogState extends State<CombatLog> {
                 padding: const EdgeInsets.all(24),
                 child: Center(
                   child: Text(
-                    'No rolls yet — make history!',
-                    style: TextStyle(color: Colors.white.withOpacity(0.25), fontSize: 13),
+                    'No logs yet — make history!',
+                    style: TextStyle(
+                      color: Colors.white.withOpacity(0.25),
+                      fontSize: 13,
+                    ),
                   ),
                 ),
               )
@@ -106,36 +113,79 @@ class _LogEntry extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final category = entry['category'] as String? ?? 'dice';
     final result = entry['result'] as int? ?? 0;
     final message = entry['message'] as String? ?? '';
-    final isNat20 = result == 20;
-    final isNat1 = result == 1;
 
-    final borderColor = isNat20
-        ? Colors.amber.withOpacity(0.35)
-        : isNat1
-            ? Colors.red.withOpacity(0.35)
-            : Colors.white.withOpacity(0.06);
+    Color mainColor = Colors.white70;
+    Color bgColor = Colors.white.withOpacity(0.03);
+    Color borderColor = Colors.white.withOpacity(0.06);
+    Color badgeColor = Colors.white.withOpacity(0.08);
+    String emoji = '🎲';
+    bool showBadge = false;
 
-    final bgColor = isNat20
-        ? Colors.amber.withOpacity(0.06)
-        : isNat1
-            ? Colors.red.withOpacity(0.06)
-            : Colors.white.withOpacity(0.03);
-
-    final textColor = isNat20
-        ? Colors.amber.shade300
-        : isNat1
-            ? Colors.red.shade300
-            : Colors.white70;
-
-    final badge = isNat20
-        ? Colors.amber.withOpacity(0.25)
-        : isNat1
-            ? Colors.red.withOpacity(0.25)
-            : Colors.white.withOpacity(0.08);
-
-    final emoji = isNat20 ? '⚔️' : isNat1 ? '💀' : '🎲';
+    switch (category) {
+      case 'system':
+        mainColor = Colors.white54;
+        bgColor = Colors.white.withOpacity(0.02);
+        borderColor = Colors.white.withOpacity(0.1);
+        emoji = 'ℹ️';
+        break;
+      case 'dice':
+        final isNat20 = result == 20;
+        final isNat1 = result == 1;
+        showBadge = true;
+        if (isNat20) {
+          mainColor = Colors.amber.shade300;
+          bgColor = Colors.amber.withOpacity(0.08);
+          borderColor = Colors.amber.withOpacity(0.4);
+          badgeColor = Colors.amber.withOpacity(0.3);
+          emoji = '⚔️';
+        } else if (isNat1) {
+          mainColor = Colors.red.shade300;
+          bgColor = Colors.red.withOpacity(0.08);
+          borderColor = Colors.red.withOpacity(0.4);
+          badgeColor = Colors.red.withOpacity(0.3);
+          emoji = '💀';
+        } else {
+          emoji = '🎲';
+        }
+        break;
+      case 'level_up':
+        mainColor = Colors.purpleAccent.shade100;
+        bgColor = Colors.purple.withOpacity(0.1);
+        borderColor = Colors.purpleAccent.withOpacity(0.4);
+        emoji = '⬆️';
+        break;
+      case 'stat_alloc':
+        mainColor = Colors.blueAccent.shade100;
+        bgColor = Colors.blue.withOpacity(0.1);
+        borderColor = Colors.blueAccent.withOpacity(0.4);
+        emoji = '📊';
+        break;
+      case 'hp_change':
+        final isDamage = message.contains('(-');
+        mainColor = isDamage
+            ? Colors.redAccent.shade100
+            : Colors.greenAccent.shade100;
+        bgColor = (isDamage ? Colors.red : Colors.green).withOpacity(0.08);
+        borderColor = (isDamage ? Colors.redAccent : Colors.greenAccent)
+            .withOpacity(0.3);
+        emoji = isDamage ? '💥' : '💖';
+        break;
+      case 'mp_change':
+        mainColor = Colors.blue.shade200;
+        bgColor = Colors.blue.withOpacity(0.08);
+        borderColor = Colors.blue.withOpacity(0.3);
+        emoji = '💧';
+        break;
+      case 'gold_change':
+        mainColor = Colors.amber.shade200;
+        bgColor = Colors.amber.withOpacity(0.08);
+        borderColor = Colors.amber.withOpacity(0.3);
+        emoji = '💰';
+        break;
+    }
 
     return Container(
       margin: const EdgeInsets.only(bottom: 7),
@@ -150,28 +200,29 @@ class _LogEntry extends StatelessWidget {
           Text(emoji, style: const TextStyle(fontSize: 14)),
           const SizedBox(width: 10),
           Expanded(
-            child: Text(message, style: TextStyle(fontSize: 13, color: textColor)),
-          ),
-          const SizedBox(width: 8),
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-            decoration: BoxDecoration(
-              color: badge,
-              borderRadius: BorderRadius.circular(12),
-            ),
             child: Text(
-              '$result',
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.bold,
-                color: isNat20
-                    ? Colors.amber
-                    : isNat1
-                        ? Colors.redAccent
-                        : Colors.white,
+              message,
+              style: TextStyle(fontSize: 13, color: mainColor),
+            ),
+          ),
+          if (showBadge) ...[
+            const SizedBox(width: 8),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+              decoration: BoxDecoration(
+                color: badgeColor,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(
+                '$result',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: mainColor,
+                ),
               ),
             ),
-          ),
+          ],
         ],
       ),
     );
