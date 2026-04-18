@@ -94,6 +94,10 @@ async def websocket_endpoint(websocket: WebSocket):
                 await websocket.send_text(json.dumps(get_game_state()))
                 continue
 
+            elif event["type"] == "ping":
+                # Heartbeat to keep connection alive on Render/Heroku
+                continue
+
             elif event["type"] == "addnew":
                 player_data = event["player"]
                 player_id = str(uuid.uuid4())
