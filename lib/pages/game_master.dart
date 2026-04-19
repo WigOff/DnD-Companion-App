@@ -801,6 +801,67 @@ class _GameMasterState extends State<GameMaster> with TickerProviderStateMixin {
                   ],
                 ),
               ),
+              const SizedBox(height: 16),
+
+              // Reward Preview Area
+              if (_rewardItem != null)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    color: (_rewardType == 'spell'
+                            ? Colors.deepPurpleAccent
+                            : Colors.orangeAccent)
+                        .withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(
+                      color: (_rewardType == 'spell'
+                              ? Colors.deepPurpleAccent
+                              : Colors.orangeAccent)
+                          .withValues(alpha: 0.2),
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            _rewardType == 'spell'
+                                ? Icons.auto_fix_high
+                                : Icons.gavel,
+                            size: 16,
+                            color: _rewardType == 'spell'
+                                ? Colors.deepPurpleAccent
+                                : Colors.orangeAccent,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'ITEM PREVIEW: $_rewardItem',
+                            style: GoogleFonts.cinzel(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: _rewardType == 'spell'
+                                  ? Colors.deepPurpleAccent
+                                  : Colors.orangeAccent,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        _rewardType == 'spell'
+                            ? kAllSpells[_rewardItem!]!.description
+                            : kAllWeapons[_rewardItem!]!.description,
+                        style: GoogleFonts.cinzel(
+                          fontSize: 13,
+                          color: Colors.white.withValues(alpha: 0.8),
+                          height: 1.5,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               const SizedBox(height: 24),
 
               // Grant button

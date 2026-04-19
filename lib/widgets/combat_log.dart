@@ -7,7 +7,8 @@ import 'package:dnd_app/providers/player_provider.dart';
 /// Scrollable combat log showing all dice rolls from the current session.
 /// Auto-scrolls to the newest entry. Color-coded for nat 1/20.
 class CombatLog extends StatefulWidget {
-  const CombatLog({super.key});
+  final bool shrinkWrap;
+  const CombatLog({super.key, this.shrinkWrap = false});
 
   @override
   State<CombatLog> createState() => _CombatLogState();
@@ -23,6 +24,7 @@ class _CombatLogState extends State<CombatLog> {
   }
 
   void _scrollToBottom() {
+    if (widget.shrinkWrap) return; // Parent handles scrolling
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (_scroll.hasClients) {
         _scroll.animateTo(
@@ -43,6 +45,7 @@ class _CombatLogState extends State<CombatLog> {
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: widget.shrinkWrap ? MainAxisSize.min : MainAxisSize.max,
           children: [
             // ── Header ────────────────────────────────────────────────────
             Padding(
@@ -82,10 +85,17 @@ class _CombatLogState extends State<CombatLog> {
                   child: Text(
                     'No logs yet — make history!',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.25),
+                      color: Colors.white.withValues(alpha: 0.25),
                       fontSize: 13,
                     ),
                   ),
+                ),
+              )
+            else if (widget.shrinkWrap)
+              Padding(
+                padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
+                child: Column(
+                  children: log.map((e) => _LogEntry(entry: e)).toList(),
                 ),
               )
             else
@@ -127,8 +137,8 @@ class _LogEntry extends StatelessWidget {
     switch (category) {
       case 'system':
         mainColor = Colors.white54;
-        bgColor = Colors.white.withOpacity(0.02);
-        borderColor = Colors.white.withOpacity(0.1);
+        bgColor = Colors.white.withValues(alpha: 0.02);
+        borderColor = Colors.white.withValues(alpha: 0.1);
         emoji = 'ℹ️';
         break;
       case 'dice':
@@ -137,15 +147,15 @@ class _LogEntry extends StatelessWidget {
         showBadge = true;
         if (isNat20) {
           mainColor = Colors.amber.shade300;
-          bgColor = Colors.amber.withOpacity(0.08);
-          borderColor = Colors.amber.withOpacity(0.4);
-          badgeColor = Colors.amber.withOpacity(0.3);
+          bgColor = Colors.amber.withValues(alpha: 0.08);
+          borderColor = Colors.amber.withValues(alpha: 0.4);
+          badgeColor = Colors.amber.withValues(alpha: 0.3);
           emoji = '⚔️';
         } else if (isNat1) {
           mainColor = Colors.red.shade300;
-          bgColor = Colors.red.withOpacity(0.08);
-          borderColor = Colors.red.withOpacity(0.4);
-          badgeColor = Colors.red.withOpacity(0.3);
+          bgColor = Colors.red.withValues(alpha: 0.08);
+          borderColor = Colors.red.withValues(alpha: 0.4);
+          badgeColor = Colors.red.withValues(alpha: 0.3);
           emoji = '💀';
         } else {
           emoji = '🎲';
@@ -153,14 +163,14 @@ class _LogEntry extends StatelessWidget {
         break;
       case 'level_up':
         mainColor = Colors.purpleAccent.shade100;
-        bgColor = Colors.purple.withOpacity(0.1);
-        borderColor = Colors.purpleAccent.withOpacity(0.4);
+        bgColor = Colors.purple.withValues(alpha: 0.1);
+        borderColor = Colors.purpleAccent.withValues(alpha: 0.4);
         emoji = '⬆️';
         break;
       case 'stat_alloc':
         mainColor = Colors.blueAccent.shade100;
-        bgColor = Colors.blue.withOpacity(0.1);
-        borderColor = Colors.blueAccent.withOpacity(0.4);
+        bgColor = Colors.blue.withValues(alpha: 0.1);
+        borderColor = Colors.blueAccent.withValues(alpha: 0.4);
         emoji = '📊';
         break;
       case 'hp_change':
@@ -168,22 +178,54 @@ class _LogEntry extends StatelessWidget {
         mainColor = isDamage
             ? Colors.redAccent.shade100
             : Colors.greenAccent.shade100;
-        bgColor = (isDamage ? Colors.red : Colors.green).withOpacity(0.08);
+        bgColor = (isDamage ? Colors.red : Colors.green).withValues(
+          alpha: 0.08,
+        );
         borderColor = (isDamage ? Colors.redAccent : Colors.greenAccent)
-            .withOpacity(0.3);
+            .withValues(alpha: 0.3);
         emoji = isDamage ? '💥' : '💖';
         break;
       case 'mp_change':
         mainColor = Colors.blue.shade200;
-        bgColor = Colors.blue.withOpacity(0.08);
-        borderColor = Colors.blue.withOpacity(0.3);
+        bgColor = Colors.blue.withValues(alpha: 0.08);
+        borderColor = Colors.blue.withValues(alpha: 0.3);
         emoji = '💧';
         break;
       case 'gold_change':
         mainColor = Colors.amber.shade200;
-        bgColor = Colors.amber.withOpacity(0.08);
-        borderColor = Colors.amber.withOpacity(0.3);
+        bgColor = Colors.amber.withValues(alpha: 0.08);
+        borderColor = Colors.amber.withValues(alpha: 0.3);
         emoji = '💰';
+        break;
+      case 'reward':
+        mainColor = Colors.amberAccent;
+        bgColor = Colors.amber.withValues(alpha: 0.1);
+        borderColor = Colors.amberAccent.withValues(alpha: 0.4);
+        emoji = '⭐';
+        break;
+      case 'equip':
+        mainColor = Colors.orangeAccent;
+        bgColor = Colors.orange.withValues(alpha: 0.08);
+        borderColor = Colors.orangeAccent.withValues(alpha: 0.3);
+        emoji = '🛡️';
+        break;
+      case 'attack':
+        mainColor = Colors.redAccent.shade100;
+        bgColor = Colors.red.withValues(alpha: 0.08);
+        borderColor = Colors.redAccent.withValues(alpha: 0.4);
+        emoji = '⚔️';
+        break;
+      case 'spell':
+        mainColor = Colors.deepPurpleAccent.shade100;
+        bgColor = Colors.deepPurple.withValues(alpha: 0.1);
+        borderColor = Colors.deepPurpleAccent.withValues(alpha: 0.4);
+        emoji = '✨';
+        break;
+      case 'heal':
+        mainColor = Colors.greenAccent.shade100;
+        bgColor = Colors.green.withValues(alpha: 0.1);
+        borderColor = Colors.greenAccent.withValues(alpha: 0.4);
+        emoji = '💚';
         break;
     }
 
