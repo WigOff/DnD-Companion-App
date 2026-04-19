@@ -18,11 +18,11 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
-    return await openDatabase(path, version: 4, onCreate: _createDB, onUpgrade: _onUpgrade);
+    return await openDatabase(path, version: 5, onCreate: _createDB, onUpgrade: _onUpgrade);
   }
 
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 4) {
+    if (oldVersion < 5) {
       await db.execute('DROP TABLE IF EXISTS players');
       await _createDB(db, newVersion);
     }
@@ -51,7 +51,9 @@ class DatabaseHelper {
         constitution INTEGER NOT NULL,
         intelligence INTEGER NOT NULL,
         wisdom INTEGER NOT NULL,
-        charisma INTEGER NOT NULL
+        charisma INTEGER NOT NULL,
+        subclass TEXT NOT NULL,
+        subclassDescription TEXT NOT NULL
       )
     ''');
   }
