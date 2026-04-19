@@ -5,8 +5,40 @@ import uuid
 import random
 import string
 import os
+from contextlib import asynccontextmanager
+from motor.motor_asyncio import AsyncIOMotorClient
+from dotenv import load_dotenv
 
-app = FastAPI()
+load_dotenv()
+
+# ─── Database Setup ──────────────────────────────────────────────────────────
+
+class Database:
+    client: AsyncIOMotorClient = None
+    db = None
+
+db_helper = Database()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup: Connect to MongoDB
+    mongodb_uri = os.getenv("MONGODB_URI")
+    if not mongodb_uri:
+        print("⚠️ MONGODB_URI not found in environment. Persistence will fail.")
+    else:
+        db_helper.client = AsyncIOMotorClient(mongodb_uri)
+        db_helper.db = db_helper.client.dnd_database
+        print("✅ Connected to MongoDB Atlas")
+    
+    try:
+        yield
+    finally:
+        # Shutdown: Close the connection
+        if db_helper.client:
+            db_helper.client.close()
+            print("🛑 Closed MongoDB connection")
+
+app = FastAPI(lifespan=lifespan)
 
 origins = [
     "*",  # allow all (good for dev)
@@ -22,9 +54,7 @@ app.add_middleware(
 
 # ─── Constants ───────────────────────────────────────────────────────────────
 
-ROOMS_DIR = "rooms"
-if not os.path.exists(ROOMS_DIR):
-    os.makedirs(ROOMS_DIR)
+# Removed ROOMS_DIR as we are migrating to MongoDB
 
 CLASS_DEFAULTS = {
     "Fighter":   {"strength":14,"dexterity":10,"constitution":14,"intelligence":6,"wisdom":8,"charisma":8},
@@ -158,10 +188,13 @@ class Room:
             }
         self.connections = []
 
-    def save(self):
-        filepath = os.path.join(ROOMS_DIR, f"{self.room_id}.json")
-        with open(filepath, "w") as f:
-            json.dump(self.state, f)
+    async def save(self):
+        if db_helper.db is not None:
+            await db_helper.db.rooms.replace_one(
+                {"room_id": self.room_id},
+                {"room_id": self.room_id, "state": self.state},
+                upsert=True
+            )
 
     async def broadcast(self, message_dict):
         final_data = json.dumps(message_dict)
@@ -185,40 +218,37 @@ class RoomManager:
         self.rooms = {}  # room_id -> Room object
         self.websocket_to_room = {}  # WebSocket -> room_id
 
-    def get_room(self, room_id):
+    async def get_room(self, room_id):
         room_id = room_id.upper()
         if room_id in self.rooms:
             return self.rooms[room_id]
         
-        # Try loading from disk
-        filepath = os.path.join(ROOMS_DIR, f"{room_id}.json")
-        if os.path.exists(filepath):
-            try:
-                with open(filepath, "r") as f:
-                    state = json.load(f)
-                    # Migrations if needed
-                    for p in state.get("players", {}).values():
-                        p.setdefault("availablePoints", 0)
-                        p.setdefault("weapon", "")
-                        p.setdefault("gender", "male")
-                        p.setdefault("spells", [])
-                        p.setdefault("inventoryWeapons", [])
-                        p.setdefault("knownSpells", [])
-                    
-                    room = Room(room_id, state)
-                    self.rooms[room_id] = room
-                    return room
-            except Exception as e:
-                print(f"Error loading room {room_id}: {e}")
+        # Try loading from MongoDB
+        if db_helper.db is not None:
+            room_doc = await db_helper.db.rooms.find_one({"room_id": room_id})
+            if room_doc:
+                state = room_doc["state"]
+                # Migrations if needed
+                for p in state.get("players", {}).values():
+                    p.setdefault("availablePoints", 0)
+                    p.setdefault("weapon", "")
+                    p.setdefault("gender", "male")
+                    p.setdefault("spells", [])
+                    p.setdefault("inventoryWeapons", [])
+                    p.setdefault("knownSpells", [])
+                
+                room = Room(room_id, state)
+                self.rooms[room_id] = room
+                return room
         return None
 
-    def create_room(self):
+    async def create_room(self):
         code = generate_room_code()
-        while self.get_room(code) is not None:
+        while (await self.get_room(code)) is not None:
             code = generate_room_code()
         
         room = Room(code)
-        room.save()
+        await room.save()
         self.rooms[code] = room
         return room
 
@@ -254,11 +284,11 @@ async def websocket_endpoint(websocket: WebSocket):
             data = await websocket.receive_text()
             event = json.loads(data)
             room_id_context = manager.websocket_to_room.get(websocket)
-            current_room = manager.get_room(room_id_context) if room_id_context else None
+            current_room = await manager.get_room(room_id_context) if room_id_context else None
 
             # ── Connection Management ──
             if event["type"] == "create_room":
-                current_room = manager.create_room()
+                current_room = await manager.create_room()
                 manager.add_connection(websocket, current_room)
                 await websocket.send_text(json.dumps({
                     "type": "room_created",
@@ -269,7 +299,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
             elif event["type"] == "join_room":
                 room_id = event.get("room_id", "").upper()
-                room = manager.get_room(room_id)
+                room = await manager.get_room(room_id)
                 if room:
                     manager.add_connection(websocket, room)
                     current_room = room
@@ -328,7 +358,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     "message": f"🎭 {p_name} joined room {current_room.room_id} as {p_class}",
                     "playerid": player_id
                 })
-                current_room.save()
+                await current_room.save()
 
             elif event["type"] == "update":
                 new_data = event["player"]
@@ -374,13 +404,13 @@ async def websocket_endpoint(websocket: WebSocket):
                     except: pass
 
                     state["players"][pid] = new_data
-                    current_room.save()
+                    await current_room.save()
 
             elif event["type"] == "delete":
                 pid = str(event.get("id"))
                 if pid in state["players"]:
                     state["players"].pop(pid)
-                    current_room.save()
+                    await current_room.save()
 
             elif event["type"] == "roll_dice":
                 pid = str(event.get("playerid", "gm"))
@@ -404,7 +434,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     "message": f"{player_name} rolled D{sides}: {result}{suffix}",
                 })
                 state["log"] = state["log"][-100:]
-                current_room.save()
+                await current_room.save()
 
             elif event["type"] == "level_up":
                 pid = str(event.get("playerid"))
@@ -420,7 +450,7 @@ async def websocket_endpoint(websocket: WebSocket):
                             "message": f"⬆️ {p.get('name')} reached Level {p['level']}!",
                             "playerid": pid
                         })
-                        current_room.save()
+                        await current_room.save()
 
             elif event["type"] == "allocate_stat":
                 pid = str(event.get("playerid"))
@@ -436,7 +466,7 @@ async def websocket_endpoint(websocket: WebSocket):
                             "message": f"📊 {p.get('name')} increased {stat[:3].upper()} to {p[stat]}",
                             "playerid": pid
                         })
-                        current_room.save()
+                        await current_room.save()
 
             elif event["type"] == "grant_reward":
                 pid = str(event.get("playerid"))
@@ -462,7 +492,7 @@ async def websocket_endpoint(websocket: WebSocket):
                                 "message": f"⚔️ {p.get('name')} obtained {item_name}",
                                 "playerid": pid
                             })
-                    current_room.save()
+                    await current_room.save()
 
             elif event["type"] == "equip_weapon":
                 pid = str(event.get("playerid"))
@@ -477,7 +507,7 @@ async def websocket_endpoint(websocket: WebSocket):
                             "message": f"🛡️ {p.get('name')} equipped {weapon}",
                             "playerid": pid
                         })
-                        current_room.save()
+                        await current_room.save()
 
             elif event["type"] == "attack":
                 pid = str(event.get("playerid"))
@@ -494,7 +524,7 @@ async def websocket_endpoint(websocket: WebSocket):
                         "message": f"⚔️ {p.get('name')} attacks with {weapon_name} → {total_damage} damage",
                         "playerid": pid,
                     })
-                    current_room.save()
+                    await current_room.save()
 
             elif event["type"] == "cast_spell":
                 pid = str(event.get("playerid"))
@@ -521,7 +551,7 @@ async def websocket_endpoint(websocket: WebSocket):
                         "message": msg,
                         "playerid": pid,
                     })
-                    current_room.save()
+                    await current_room.save()
 
             elif event["type"] == "get_lists":
                 await websocket.send_text(json.dumps({
