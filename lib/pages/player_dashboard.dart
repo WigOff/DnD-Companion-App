@@ -188,8 +188,20 @@ class _HeaderBackground extends StatelessWidget {
                   CircleAvatar(
                     radius: 48,
                     backgroundColor: Colors.deepPurple.withValues(alpha: 0.3),
-                    backgroundImage: AssetImage(
-                      'assets/images/races/${live.race.toLowerCase().replaceAll('-', '_')}.png',
+                    child: ClipOval(
+                      child: Image.asset(
+                        'assets/images/races/${live.race.toLowerCase().replaceAll(' ', '_').replaceAll('-', '_')}_${live.gender}.png',
+                        fit: BoxFit.cover,
+                        errorBuilder: (context, error, stackTrace) {
+                          // Fallback to a default image if the gendered one fails
+                          return Image.asset(
+                            'assets/images/races/${live.race.toLowerCase().replaceAll(' ', '_').replaceAll('-', '_')}.png',
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.person, color: Colors.white24, size: 40),
+                          );
+                        },
+                      ),
                     ),
                   ),
                 ],

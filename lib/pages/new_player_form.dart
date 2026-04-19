@@ -69,6 +69,7 @@ class _NewPlayerFormState extends State<NewPlayerForm> {
       availablePoints: 0,
       proficiencyBonus: 2,
       weapon: starterWeapon,
+      gender: isMale ? 'male' : 'female',
       spells: List<String>.from(starterSpells),
       inventoryWeapons: [starterWeapon],
       knownSpells: List<String>.from(starterSpells),

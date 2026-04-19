@@ -200,6 +200,7 @@ class RoomManager:
                     for p in state.get("players", {}).values():
                         p.setdefault("availablePoints", 0)
                         p.setdefault("weapon", "")
+                        p.setdefault("gender", "male")
                         p.setdefault("spells", [])
                         p.setdefault("inventoryWeapons", [])
                         p.setdefault("knownSpells", [])

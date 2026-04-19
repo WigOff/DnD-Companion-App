@@ -25,6 +25,7 @@ class Player {
   final String subclass;
   final String subclassDescription;
   final String weapon;
+  final String gender;
   final List<String> spells;
   final List<String> inventoryWeapons;
   final List<String> knownSpells;
@@ -54,6 +55,7 @@ class Player {
     this.subclass = 'None',
     this.subclassDescription = '',
     this.weapon = '',
+    this.gender = 'male',
     this.spells = const [],
     this.inventoryWeapons = const [],
     this.knownSpells = const [],
@@ -85,6 +87,7 @@ class Player {
       subclass: json['subclass'] ?? 'None',
       subclassDescription: json['subclassDescription'] ?? '',
       weapon: json['weapon'] ?? '',
+      gender: json['gender'] ?? 'male',
       spells: List<String>.from(json['spells'] ?? []),
       inventoryWeapons: List<String>.from(json['inventoryWeapons'] ?? []),
       knownSpells: List<String>.from(json['knownSpells'] ?? []),
@@ -117,6 +120,7 @@ class Player {
       subclass: map['subclass'] ?? 'None',
       subclassDescription: map['subclassDescription'] ?? '',
       weapon: map['weapon'] ?? '',
+      gender: map['gender'] ?? 'male',
       spells: _decodeList(map['spells']),
       inventoryWeapons: _decodeList(map['inventoryWeapons']),
       knownSpells: _decodeList(map['knownSpells']),
@@ -163,6 +167,7 @@ class Player {
       'subclass': subclass,
       'subclassDescription': subclassDescription,
       'weapon': weapon,
+      'gender': gender,
       'spells': spells,
       'inventoryWeapons': inventoryWeapons,
       'knownSpells': knownSpells,
@@ -196,6 +201,7 @@ class Player {
       'subclass': subclass,
       'subclassDescription': subclassDescription,
       'weapon': weapon,
+      'gender': gender,
       'spells': jsonEncode(spells),
       'inventoryWeapons': jsonEncode(inventoryWeapons),
       'knownSpells': jsonEncode(knownSpells),
@@ -230,6 +236,7 @@ class Player {
     String? subclass,
     String? subclassDescription,
     String? weapon,
+    String? gender,
     List<String>? spells,
     List<String>? inventoryWeapons,
     List<String>? knownSpells,
@@ -259,6 +266,7 @@ class Player {
       subclass: subclass ?? this.subclass,
       subclassDescription: subclassDescription ?? this.subclassDescription,
       weapon: weapon ?? this.weapon,
+      gender: gender ?? this.gender,
       spells: spells ?? this.spells,
       inventoryWeapons: inventoryWeapons ?? this.inventoryWeapons,
       knownSpells: knownSpells ?? this.knownSpells,

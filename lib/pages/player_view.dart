@@ -350,19 +350,26 @@ class _PlayerViewState extends State<PlayerView> {
                               Column(
                                 crossAxisAlignment: CrossAxisAlignment.end,
                                 children: [
-                                  Container(
-                                    width: 60,
-                                    height: 60,
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      image: DecorationImage(
-                                        image: AssetImage(
-                                          'assets/images/races/${loadedPlayer!.race.toLowerCase().replaceAll('-', '_')}.png',
-                                        ),
+                                    Container(
+                                      width: 60,
+                                      height: 60,
+                                      decoration: const BoxDecoration(
+                                        shape: BoxShape.circle,
+                                      ),
+                                      clipBehavior: Clip.antiAlias,
+                                      child: Image.asset(
+                                        'assets/images/races/${loadedPlayer!.race.toLowerCase().replaceAll(' ', '_').replaceAll('-', '_')}_${loadedPlayer!.gender}.png',
                                         fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Image.asset(
+                                            'assets/images/races/${loadedPlayer!.race.toLowerCase().replaceAll(' ', '_').replaceAll('-', '_')}.png',
+                                            fit: BoxFit.cover,
+                                            errorBuilder: (context, error, stackTrace) =>
+                                                const Icon(Icons.person, color: Colors.grey, size: 30),
+                                          );
+                                        },
                                       ),
                                     ),
-                                  ),
                                   Text(
                                     'Race: ${loadedPlayer!.race}',
                                     style: const TextStyle(fontSize: 14),
