@@ -27,7 +27,24 @@ class _JoinGameState extends State<JoinGame> {
         ),
         title: Text(
           'Join Game',
-          style: GoogleFonts.cinzel(color: Colors.white, fontWeight: FontWeight.bold),
+          style: GoogleFonts.cinzel(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(30),
+          child: Consumer<PlayerProvider>(
+            builder: (context, provider, _) => Text(
+              'ROOM: ${provider.currentRoomId ?? '------'}',
+              style: GoogleFonts.cinzel(
+                fontSize: 12,
+                color: Colors.white24,
+                letterSpacing: 2,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
         ),
       ),
       body: Padding(
@@ -47,7 +64,10 @@ class _JoinGameState extends State<JoinGame> {
             const SizedBox(height: 8),
             Text(
               'Choose how you want to enter the session.',
-              style: GoogleFonts.cinzel(fontSize: 15, color: Colors.white.withOpacity(0.5)),
+              style: GoogleFonts.cinzel(
+                fontSize: 15,
+                color: Colors.white.withOpacity(0.5),
+              ),
             ),
             const SizedBox(height: 48),
 
@@ -142,7 +162,10 @@ class _JoinOptionCard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: GoogleFonts.cinzel(fontSize: 13, color: Colors.white.withOpacity(0.55)),
+                    style: GoogleFonts.cinzel(
+                      fontSize: 13,
+                      color: Colors.white.withOpacity(0.55),
+                    ),
                   ),
                 ],
               ),
@@ -228,18 +251,30 @@ class _ExistingPlayerSheetState extends State<_ExistingPlayerSheet> {
                     const SizedBox(height: 4),
                     Text(
                       'Search by name to find your character.',
-                      style: GoogleFonts.cinzel(fontSize: 13, color: Colors.white.withOpacity(0.55)),
+                      style: GoogleFonts.cinzel(
+                        fontSize: 13,
+                        color: Colors.white.withOpacity(0.55),
+                      ),
                     ),
                     const SizedBox(height: 16),
                     // Search bar
                     TextField(
                       controller: _controller,
                       autofocus: true,
-                      style: GoogleFonts.cinzel(color: Colors.white, fontSize: 13),
+                      style: GoogleFonts.cinzel(
+                        color: Colors.white,
+                        fontSize: 13,
+                      ),
                       decoration: InputDecoration(
                         hintText: 'Search players...',
-                        hintStyle: GoogleFonts.cinzel(color: Colors.white.withOpacity(0.35), fontSize: 13),
-                        prefixIcon: Icon(Icons.search, color: Colors.white.withOpacity(0.5)),
+                        hintStyle: GoogleFonts.cinzel(
+                          color: Colors.white.withOpacity(0.35),
+                          fontSize: 13,
+                        ),
+                        prefixIcon: Icon(
+                          Icons.search,
+                          color: Colors.white.withOpacity(0.5),
+                        ),
                         filled: true,
                         fillColor: Colors.white.withOpacity(0.07),
                         border: OutlineInputBorder(
@@ -262,13 +297,18 @@ class _ExistingPlayerSheetState extends State<_ExistingPlayerSheet> {
                           allPlayers.isEmpty
                               ? 'No players in session yet.'
                               : 'No players match your search.',
-                          style: TextStyle(color: Colors.white.withOpacity(0.4)),
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.4),
+                          ),
                         ),
                       )
                     : ListView.builder(
                         controller: scrollController,
                         itemCount: _suggestions.length,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
                         itemBuilder: (_, i) {
                           final player = _suggestions[i];
                           return _PlayerSearchTile(
@@ -278,7 +318,8 @@ class _ExistingPlayerSheetState extends State<_ExistingPlayerSheet> {
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
-                                  builder: (_) => PlayerDashboard(player: player),
+                                  builder: (_) =>
+                                      PlayerDashboard(player: player),
                                 ),
                               );
                             },
@@ -318,7 +359,10 @@ class _PlayerSearchTile extends StatelessWidget {
               backgroundColor: Colors.deepPurple.withOpacity(0.4),
               child: Text(
                 player.name.isNotEmpty ? player.name[0].toUpperCase() : '?',
-                style: GoogleFonts.cinzel(color: Colors.white, fontWeight: FontWeight.bold),
+                style: GoogleFonts.cinzel(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ),
             const SizedBox(width: 14),
@@ -328,16 +372,27 @@ class _PlayerSearchTile extends StatelessWidget {
                 children: [
                   Text(
                     player.name,
-                    style: GoogleFonts.cinzel(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                    style: GoogleFonts.cinzel(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    ),
                   ),
                   Text(
                     '${player.race} · ${player.playerClass} · Lvl ${player.level}',
-                    style: GoogleFonts.cinzel(color: Colors.white.withOpacity(0.45), fontSize: 12),
+                    style: GoogleFonts.cinzel(
+                      color: Colors.white.withOpacity(0.45),
+                      fontSize: 12,
+                    ),
                   ),
                 ],
               ),
             ),
-            Icon(Icons.login, color: Colors.tealAccent.withOpacity(0.7), size: 20),
+            Icon(
+              Icons.login,
+              color: Colors.tealAccent.withOpacity(0.7),
+              size: 20,
+            ),
           ],
         ),
       ),

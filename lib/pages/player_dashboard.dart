@@ -600,7 +600,7 @@ class _ActionsTab extends StatelessWidget {
                 // ── Combat Log ───────────────────────────────────────
                 _SectionLabel('COMBAT LOG'),
                 const SizedBox(height: 10),
-                const CombatLog(shrinkWrap: true),
+                const CombatLog(),
               ]),
             ),
           ),

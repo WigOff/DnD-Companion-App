@@ -9,6 +9,8 @@ class PlayerProvider with ChangeNotifier {
   List<Player> _players = [];
   bool _isLoading = false;
   List<Map<String, dynamic>> _log = [];
+  String? _currentRoomId;
+  String? _connectionError;
 
   final StreamController<Map<String, dynamic>> _rollStreamController =
       StreamController<Map<String, dynamic>>.broadcast();
@@ -16,6 +18,8 @@ class PlayerProvider with ChangeNotifier {
   List<Player> get players => _players;
   bool get isLoading => _isLoading;
   List<Map<String, dynamic>> get log => _log;
+  String? get currentRoomId => _currentRoomId;
+  String? get connectionError => _connectionError;
   Stream<Map<String, dynamic>> get rollStream => _rollStreamController.stream;
 
   PlayerProvider() {
@@ -27,7 +31,15 @@ class PlayerProvider with ChangeNotifier {
     ws.stream.listen((message) async {
       try {
         final data = jsonDecode(message);
-        if (data['type'] == 'game_state') {
+
+        if (data['type'] == 'room_created' || data['type'] == 'room_joined') {
+          _currentRoomId = data['room_id'];
+          _connectionError = null;
+          notifyListeners();
+        } else if (data['type'] == 'error') {
+          _connectionError = data['message'];
+          notifyListeners();
+        } else if (data['type'] == 'game_state') {
           _players = (data['players'] as List)
               .map((p) => Player.fromJson(p))
               .toList();
@@ -53,15 +65,32 @@ class PlayerProvider with ChangeNotifier {
           _log = incoming;
 
           _isLoading = false;
+          _connectionError = null;
           notifyListeners();
         }
       } catch (e) {
         print("Error parsing WebSocket message: $e");
       }
     });
+  }
 
-    // Listener is now active — request the current state from the server
-    ws.send({'type': 'get_state'});
+  Future<void> createRoom() async {
+    _isLoading = true;
+    _connectionError = null;
+    notifyListeners();
+    ws.send({'type': 'create_room'});
+  }
+
+  Future<void> joinRoom(String roomId) async {
+    _isLoading = true;
+    _connectionError = null;
+    notifyListeners();
+    ws.send({'type': 'join_room', 'room_id': roomId});
+  }
+
+  void clearError() {
+    _connectionError = null;
+    notifyListeners();
   }
 
   Future<void> loadPlayers() async {
@@ -82,8 +111,12 @@ class PlayerProvider with ChangeNotifier {
 
   /// Sends a roll_dice event to the server.
   /// [playerId] is null for GM rolls.
-  void rollDice(String? playerId) {
-    ws.send({'type': 'roll_dice', 'playerid': playerId ?? 'gm'});
+  void rollDice(String? playerId, {int sides = 20}) {
+    ws.send({
+      'type': 'roll_dice',
+      'playerid': playerId ?? 'gm',
+      'sides': sides,
+    });
   }
 
   void levelUp(String playerId) {

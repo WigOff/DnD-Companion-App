@@ -6,6 +6,8 @@ import 'package:dnd_app/widgets/dice_roller.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:dnd_app/widgets/combat_log.dart';
 import 'package:dnd_app/data/class_loadouts.dart';
+import 'package:dnd_app/pages/new_enemy_form.dart';
+import 'package:dnd_app/pages/new_player_form.dart';
 
 class GameMaster extends StatefulWidget {
   const GameMaster({super.key});
@@ -134,7 +136,7 @@ class _GameMasterState extends State<GameMaster> with TickerProviderStateMixin {
       backgroundColor: Colors.transparent,
       appBar: AppBar(
         title: Text(
-          'Game Master Console',
+          'Dungeon Master',
           style: GoogleFonts.cinzel(
             fontWeight: FontWeight.bold,
             letterSpacing: 1.2,
@@ -148,19 +150,69 @@ class _GameMasterState extends State<GameMaster> with TickerProviderStateMixin {
             onPressed: () => context.read<PlayerProvider>().loadPlayers(),
           ),
         ],
-        bottom: TabBar(
-          controller: _tabController,
-          indicatorColor: Colors.deepPurpleAccent,
-          labelStyle: GoogleFonts.cinzel(
-            fontWeight: FontWeight.bold,
-            fontSize: 12,
+        bottom: PreferredSize(
+          preferredSize: const Size.fromHeight(100),
+          child: Column(
+            children: [
+              const SizedBox(height: 12),
+              Consumer<PlayerProvider>(
+                builder: (context, provider, _) => Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.deepPurpleAccent.withValues(alpha: 0.1),
+                    border: Border(
+                      top: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.05),
+                      ),
+                      bottom: BorderSide(
+                        color: Colors.white.withValues(alpha: 0.05),
+                      ),
+                    ),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        'ROOM CODE: ',
+                        style: GoogleFonts.cinzel(
+                          fontSize: 10,
+                          color: Colors.white38,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      Text(
+                        provider.currentRoomId ?? '------',
+                        style: GoogleFonts.cinzel(
+                          fontSize: 14,
+                          color: Colors.deepPurpleAccent,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              TabBar(
+                controller: _tabController,
+                indicatorColor: Colors.deepPurpleAccent,
+                labelStyle: GoogleFonts.cinzel(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 12,
+                ),
+                unselectedLabelStyle: GoogleFonts.cinzel(fontSize: 11),
+                tabs: const [
+                  Tab(icon: Icon(Icons.people_alt, size: 18), text: 'Players'),
+                  Tab(
+                    icon: Icon(Icons.card_giftcard, size: 18),
+                    text: 'Rewards',
+                  ),
+                  Tab(icon: Icon(Icons.casino, size: 18), text: 'Dice & Log'),
+                ],
+              ),
+            ],
           ),
-          unselectedLabelStyle: GoogleFonts.cinzel(fontSize: 11),
-          tabs: const [
-            Tab(icon: Icon(Icons.people_alt, size: 18), text: 'Players'),
-            Tab(icon: Icon(Icons.card_giftcard, size: 18), text: 'Rewards'),
-            Tab(icon: Icon(Icons.casino, size: 18), text: 'Dice & Log'),
-          ],
         ),
       ),
       body: Container(
@@ -181,40 +233,17 @@ class _GameMasterState extends State<GameMaster> with TickerProviderStateMixin {
         ),
       ),
       floatingActionButton: _currentTab == 0
-          ? FloatingActionButton.extended(
+          ? FloatingActionButton(
+              mini: true,
               heroTag: 'gm_npc',
               backgroundColor: Colors.deepPurpleAccent,
               onPressed: () {
-                context.read<PlayerProvider>().addPlayer(
-                  Player(
-                    name: 'Generic Enemy',
-                    race: 'Goblin',
-                    playerClass: 'Warrior',
-                    level: 1,
-                    xp: 0,
-                    gold: 0,
-                    pointsleft: 0,
-                    health: 15,
-                    maxHealth: 15,
-                    mana: 5,
-                    maxMana: 5,
-                    proficiencyBonus: 2,
-                    armorClass: 12,
-                    strength: 12,
-                    dexterity: 14,
-                    constitution: 12,
-                    intelligence: 8,
-                    wisdom: 10,
-                    charisma: 8,
-                    availablePoints: 0,
-                  ),
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const NewEnemyForm()),
                 );
               },
-              label: Text(
-                'Quick-Add NPC',
-                style: GoogleFonts.cinzel(fontWeight: FontWeight.bold),
-              ),
-              icon: const Icon(Icons.add),
+              child: const Icon(Icons.person_add, color: Colors.white),
             )
           : null,
     );
@@ -417,13 +446,16 @@ class _GameMasterState extends State<GameMaster> with TickerProviderStateMixin {
                                 const Divider(color: Colors.white10),
                                 if (player.weapon.isNotEmpty)
                                   Padding(
-                                    padding:
-                                        const EdgeInsets.symmetric(vertical: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                      vertical: 4,
+                                    ),
                                     child: Row(
                                       children: [
-                                        const Icon(Icons.gavel,
-                                            size: 14,
-                                            color: Colors.orangeAccent),
+                                        const Icon(
+                                          Icons.gavel,
+                                          size: 14,
+                                          color: Colors.orangeAccent,
+                                        ),
                                         const SizedBox(width: 6),
                                         Text(
                                           player.weapon,
@@ -537,10 +569,7 @@ class _GameMasterState extends State<GameMaster> with TickerProviderStateMixin {
               const SizedBox(height: 4),
               Text(
                 'Reward players with weapons and spells',
-                style: GoogleFonts.cinzel(
-                  fontSize: 12,
-                  color: Colors.white38,
-                ),
+                style: GoogleFonts.cinzel(fontSize: 12, color: Colors.white38),
               ),
               const SizedBox(height: 24),
 
@@ -570,11 +599,16 @@ class _GameMasterState extends State<GameMaster> with TickerProviderStateMixin {
                     DropdownButtonFormField<String>(
                       value: _rewardPlayerId,
                       dropdownColor: const Color(0xFF1A0A2E),
-                      style:
-                          GoogleFonts.cinzel(color: Colors.white, fontSize: 14),
+                      style: GoogleFonts.cinzel(
+                        color: Colors.white,
+                        fontSize: 14,
+                      ),
                       decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.person,
-                            color: Colors.amberAccent, size: 18),
+                        prefixIcon: const Icon(
+                          Icons.person,
+                          color: Colors.amberAccent,
+                          size: 18,
+                        ),
                         filled: true,
                         fillColor: Colors.white.withOpacity(0.05),
                         border: OutlineInputBorder(
@@ -587,7 +621,8 @@ class _GameMasterState extends State<GameMaster> with TickerProviderStateMixin {
                             (p) => DropdownMenuItem(
                               value: p.id,
                               child: Text(
-                                  '${p.name} (Lv${p.level} ${p.playerClass})'),
+                                '${p.name} (Lv${p.level} ${p.playerClass})',
+                              ),
                             ),
                           )
                           .toList(),
@@ -636,8 +671,7 @@ class _GameMasterState extends State<GameMaster> with TickerProviderStateMixin {
                               padding: const EdgeInsets.symmetric(vertical: 14),
                               decoration: BoxDecoration(
                                 color: _rewardType == 'spell'
-                                    ? Colors.deepPurpleAccent
-                                        .withOpacity(0.25)
+                                    ? Colors.deepPurpleAccent.withOpacity(0.25)
                                     : Colors.white.withOpacity(0.05),
                                 borderRadius: BorderRadius.circular(12),
                                 border: Border.all(
@@ -741,9 +775,7 @@ class _GameMasterState extends State<GameMaster> with TickerProviderStateMixin {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _rewardType == 'spell'
-                          ? 'SELECT SPELL'
-                          : 'SELECT WEAPON',
+                      _rewardType == 'spell' ? 'SELECT SPELL' : 'SELECT WEAPON',
                       style: GoogleFonts.cinzel(
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
@@ -755,8 +787,10 @@ class _GameMasterState extends State<GameMaster> with TickerProviderStateMixin {
                     DropdownButtonFormField<String>(
                       value: _rewardItem,
                       dropdownColor: const Color(0xFF1A0A2E),
-                      style:
-                          GoogleFonts.cinzel(color: Colors.white, fontSize: 13),
+                      style: GoogleFonts.cinzel(
+                        color: Colors.white,
+                        fontSize: 13,
+                      ),
                       decoration: InputDecoration(
                         prefixIcon: Icon(
                           _rewardType == 'spell'
@@ -774,28 +808,30 @@ class _GameMasterState extends State<GameMaster> with TickerProviderStateMixin {
                           borderSide: BorderSide.none,
                         ),
                       ),
-                      items: (_rewardType == 'spell'
-                              ? kAllSpells.keys.toList()
-                              : kAllWeapons.keys.toList())
-                          .map((name) {
-                        String subtitle = '';
-                        if (_rewardType == 'spell') {
-                          final info = kAllSpells[name]!;
-                          if (info.healing) {
-                            subtitle = ' (heal ${info.damage})';
-                          } else if (info.damage != '0') {
-                            subtitle = ' (${info.damage})';
-                          } else {
-                            subtitle = ' (utility)';
-                          }
-                        } else {
-                          subtitle = ' (${kAllWeapons[name]!.damage})';
-                        }
-                        return DropdownMenuItem(
-                          value: name,
-                          child: Text('$name$subtitle'),
-                        );
-                      }).toList(),
+                      items:
+                          (_rewardType == 'spell'
+                                  ? kAllSpells.keys.toList()
+                                  : kAllWeapons.keys.toList())
+                              .map((name) {
+                                String subtitle = '';
+                                if (_rewardType == 'spell') {
+                                  final info = kAllSpells[name]!;
+                                  if (info.healing) {
+                                    subtitle = ' (heal ${info.damage})';
+                                  } else if (info.damage != '0') {
+                                    subtitle = ' (${info.damage})';
+                                  } else {
+                                    subtitle = ' (utility)';
+                                  }
+                                } else {
+                                  subtitle = ' (${kAllWeapons[name]!.damage})';
+                                }
+                                return DropdownMenuItem(
+                                  value: name,
+                                  child: Text('$name$subtitle'),
+                                );
+                              })
+                              .toList(),
                       onChanged: (v) => setState(() => _rewardItem = v),
                     ),
                   ],
@@ -809,16 +845,18 @@ class _GameMasterState extends State<GameMaster> with TickerProviderStateMixin {
                   width: double.infinity,
                   padding: const EdgeInsets.all(20),
                   decoration: BoxDecoration(
-                    color: (_rewardType == 'spell'
-                            ? Colors.deepPurpleAccent
-                            : Colors.orangeAccent)
-                        .withValues(alpha: 0.1),
+                    color:
+                        (_rewardType == 'spell'
+                                ? Colors.deepPurpleAccent
+                                : Colors.orangeAccent)
+                            .withValues(alpha: 0.1),
                     borderRadius: BorderRadius.circular(16),
                     border: Border.all(
-                      color: (_rewardType == 'spell'
-                              ? Colors.deepPurpleAccent
-                              : Colors.orangeAccent)
-                          .withValues(alpha: 0.2),
+                      color:
+                          (_rewardType == 'spell'
+                                  ? Colors.deepPurpleAccent
+                                  : Colors.orangeAccent)
+                              .withValues(alpha: 0.2),
                     ),
                   ),
                   child: Column(
@@ -946,8 +984,11 @@ class _GameMasterState extends State<GameMaster> with TickerProviderStateMixin {
                           if (p.weapon.isNotEmpty)
                             Row(
                               children: [
-                                const Icon(Icons.gavel,
-                                    size: 14, color: Colors.orangeAccent),
+                                const Icon(
+                                  Icons.gavel,
+                                  size: 14,
+                                  color: Colors.orangeAccent,
+                                ),
                                 const SizedBox(width: 6),
                                 Text(
                                   'Equipped: ${p.weapon}',
@@ -998,8 +1039,7 @@ class _GameMasterState extends State<GameMaster> with TickerProviderStateMixin {
                                   .toList(),
                             ),
                           ],
-                          if (p.knownSpells.isEmpty &&
-                              p.weapon.isEmpty)
+                          if (p.knownSpells.isEmpty && p.weapon.isEmpty)
                             Text(
                               'No items yet',
                               style: GoogleFonts.cinzel(

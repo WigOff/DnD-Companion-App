@@ -26,6 +26,7 @@ class DiceRoller extends StatefulWidget {
 
 class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
   bool _isRolling = false;
+  int _selectedSides = 20;
   int _displayNumber = 20;
   int? _result;
 
@@ -33,29 +34,20 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
   StreamSubscription? _rollSub;
   final _rng = Random();
 
-  // ── Animation controllers ──────────────────────────────────────────────────
+  final List<int> _diceOptions = [4, 6, 8, 10, 12, 20];
 
-  /// Gentle pulse while numbers cycle (rolling state).
+  // ── Animation controllers ──────────────────────────────────────────────────
   late AnimationController _pulseCtrl;
   late Animation<double> _pulseAnim;
-
-  /// Bounce pop-in when the result is revealed (non-nat-1).
   late AnimationController _revealCtrl;
   late Animation<double> _revealAnim;
-
-  /// Horizontal shake for nat-1 (critical failure).
   late AnimationController _shakeCtrl;
   late Animation<double> _shakeAnim;
-
-  /// Confetti burst for nat-20 (critical success).
   late ConfettiController _confettiCtrl;
-
-  // ── Lifecycle ─────────────────────────────────────────────────────────────
 
   @override
   void initState() {
     super.initState();
-
     _pulseCtrl = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -90,7 +82,6 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
 
     _confettiCtrl = ConfettiController(duration: const Duration(seconds: 3));
 
-    // Subscribe to roll results after the first frame so the Provider is ready.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       if (mounted) {
         _rollSub = context.read<PlayerProvider>().rollStream.listen(
@@ -111,9 +102,6 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
     super.dispose();
   }
 
-  // ── Roll logic ────────────────────────────────────────────────────────────
-
-  /// Called by the stream when the server sends back the result for THIS player.
   void _onRollResult(Map<String, dynamic> roll) {
     if (!_isRolling || !mounted) return;
     if (roll['category'] != 'dice') return;
@@ -128,7 +116,6 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
   Future<void> _startRoll() async {
     if (_isRolling) return;
 
-    // Reset any leftover animation state from the previous roll.
     _revealCtrl.reset();
     _shakeCtrl.reset();
 
@@ -137,20 +124,19 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
       _result = null;
     });
 
-    // ── Haptic + Sound ─────────────────────────────────────────────────────
     _triggerRollHaptics();
     SoundService.instance.playRolling();
+    context.read<PlayerProvider>().rollDice(
+      widget.playerId,
+      sides: _selectedSides,
+    );
 
-    // ── Send to server ─────────────────────────────────────────────────────
-    context.read<PlayerProvider>().rollDice(widget.playerId);
-
-    // ── Start number-cycling timer ─────────────────────────────────────────
     _pulseCtrl.repeat(reverse: true);
     _rollTimer = Timer.periodic(const Duration(milliseconds: 55), (_) {
-      if (mounted) setState(() => _displayNumber = _rng.nextInt(20) + 1);
+      if (mounted)
+        setState(() => _displayNumber = _rng.nextInt(_selectedSides) + 1);
     });
 
-    // Safety timeout — show a local result if the server doesn't respond.
     Future.delayed(const Duration(seconds: 5), () {
       if (_isRolling && mounted) _stopRolling(null);
     });
@@ -160,10 +146,11 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
     _rollTimer?.cancel();
     _pulseCtrl.stop();
 
-    final finalResult = result ?? (_rng.nextInt(20) + 1);
-
-    // Pre-reset the reveal controller so the die pops in from scale 0.
-    if (finalResult != 1) _revealCtrl.value = 0.0;
+    final finalResult = result ?? (_rng.nextInt(_selectedSides) + 1);
+    if (_selectedSides == 20 && finalResult != 1)
+      _revealCtrl.value = 0.0;
+    else if (_selectedSides != 20)
+      _revealCtrl.value = 0.0;
 
     setState(() {
       _isRolling = false;
@@ -175,30 +162,29 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
   }
 
   Future<void> _playResultEffects(int result) async {
-    if (result == 20) {
-      // ── Critical Success ─────────────────────────────────────────────────
-      await HapticFeedback.heavyImpact();
-      await Future.delayed(const Duration(milliseconds: 110));
-      await HapticFeedback.heavyImpact();
-      await Future.delayed(const Duration(milliseconds: 110));
-      await HapticFeedback.heavyImpact();
-      _confettiCtrl.play();
-      _revealCtrl.forward(from: 0.0);
-      SoundService.instance.playCriticalSuccess();
-    } else if (result == 1) {
-      // ── Critical Failure ─────────────────────────────────────────────────
-      for (int i = 0; i < 4; i++) {
-        await HapticFeedback.mediumImpact();
-        await Future.delayed(const Duration(milliseconds: 80));
+    if (_selectedSides == 20) {
+      if (result == 20) {
+        await HapticFeedback.heavyImpact();
+        await Future.delayed(const Duration(milliseconds: 110));
+        await HapticFeedback.heavyImpact();
+        _confettiCtrl.play();
+        _revealCtrl.forward(from: 0.0);
+        SoundService.instance.playCriticalSuccess();
+        return;
+      } else if (result == 1) {
+        for (int i = 0; i < 4; i++) {
+          await HapticFeedback.mediumImpact();
+          await Future.delayed(const Duration(milliseconds: 80));
+        }
+        _shakeCtrl.forward(from: 0.0);
+        SoundService.instance.playCriticalFailure();
+        return;
       }
-      _shakeCtrl.forward(from: 0.0);
-      SoundService.instance.playCriticalFailure();
-    } else {
-      // ── Normal roll ──────────────────────────────────────────────────────
-      await HapticFeedback.heavyImpact();
-      _revealCtrl.forward(from: 0.0);
-      SoundService.instance.playResult();
     }
+
+    await HapticFeedback.heavyImpact();
+    _revealCtrl.forward(from: 0.0);
+    SoundService.instance.playResult();
   }
 
   Future<void> _triggerRollHaptics() async {
@@ -209,64 +195,70 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
   }
 
   // ── Styling helpers ───────────────────────────────────────────────────────
-
   Color get _borderColor {
-    if (_result == 20) return Colors.amber;
-    if (_result == 1) return Colors.redAccent;
+    if (_selectedSides == 20) {
+      if (_result == 20) return Colors.amber;
+      if (_result == 1) return Colors.redAccent;
+    }
     if (_isRolling) return Colors.deepPurpleAccent;
     if (_result != null) return Colors.deepPurple;
     return Colors.deepPurple.withOpacity(0.4);
   }
 
   Color get _bgColor {
-    if (_result == 20) return const Color(0xFF1F1200);
-    if (_result == 1) return const Color(0xFF1F0000);
+    if (_selectedSides == 20) {
+      if (_result == 20) return const Color(0xFF1F1200);
+      if (_result == 1) return const Color(0xFF1F0000);
+    }
     return const Color(0xFF12082E);
   }
 
   List<BoxShadow> get _glow {
-    if (_result == 20) {
-      return [
-        BoxShadow(
-          color: Colors.amber.withOpacity(0.55),
-          blurRadius: 32,
-          spreadRadius: 6,
-        ),
-      ];
+    if (_selectedSides == 20) {
+      if (_result == 20) {
+        return [
+          BoxShadow(
+            color: Colors.amber.withOpacity(0.55),
+            blurRadius: 32,
+            spreadRadius: 6,
+          ),
+        ];
+      }
+      if (_result == 1) {
+        return [
+          BoxShadow(
+            color: Colors.red.withOpacity(0.55),
+            blurRadius: 32,
+            spreadRadius: 6,
+          ),
+        ];
+      }
     }
-    if (_result == 1) {
-      return [
-        BoxShadow(
-          color: Colors.red.withOpacity(0.55),
-          blurRadius: 32,
-          spreadRadius: 6,
-        ),
-      ];
-    }
-    if (_isRolling) {
+    if (_isRolling)
       return [
         BoxShadow(
           color: Colors.deepPurpleAccent.withOpacity(0.4),
           blurRadius: 20,
         ),
       ];
-    }
     return [];
   }
 
   Color get _numberColor {
-    if (_result == 20) return Colors.amber;
-    if (_result == 1) return Colors.redAccent;
+    if (_selectedSides == 20) {
+      if (_result == 20) return Colors.amber;
+      if (_result == 1) return Colors.redAccent;
+    }
     return Colors.white;
   }
 
   String get _statusLabel {
-    if (_result == 20) return '⚔️  CRITICAL SUCCESS!';
-    if (_result == 1) return '💀  CRITICAL FAILURE!';
+    if (_selectedSides == 20) {
+      if (_result == 20) return '⚔️  CRITICAL SUCCESS!';
+      if (_result == 1) return '💀  CRITICAL FAILURE!';
+    }
     return '';
   }
-
-  // ── Build ─────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
@@ -274,34 +266,24 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
       alignment: Alignment.topCenter,
       clipBehavior: Clip.none,
       children: [
-        // ── Confetti burst (nat 20 only) ───────────────────────────────────
         ConfettiWidget(
           confettiController: _confettiCtrl,
           blastDirectionality: BlastDirectionality.explosive,
-          particleDrag: 0.05,
-          emissionFrequency: 0.06,
-          numberOfParticles: 20,
-          gravity: 0.25,
-          shouldLoop: false,
           colors: const [
             Colors.amber,
             Colors.orange,
             Colors.yellow,
             Colors.white,
             Colors.deepPurpleAccent,
-            Colors.pinkAccent,
           ],
         ),
-
-        // ── Main content ───────────────────────────────────────────────────
         Padding(
           padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // Label
               Text(
-                'D20 DICE ROLLER',
+                'MULTI-DICE ROLLER',
                 style: GoogleFonts.cinzel(
                   fontSize: 12,
                   letterSpacing: 3,
@@ -311,6 +293,52 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
               ),
               const SizedBox(height: 20),
 
+              // ── Dice Selector ─────────────────────────────────────────────
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: _diceOptions.map((s) {
+                    final isSelected = _selectedSides == s;
+                    return GestureDetector(
+                      onTap: () {
+                        if (_isRolling) return;
+                        setState(() {
+                          _selectedSides = s;
+                          _displayNumber = s;
+                          _result = null;
+                        });
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 4),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? Colors.deepPurpleAccent
+                              : Colors.white.withOpacity(0.05),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: isSelected ? Colors.white : Colors.white12,
+                          ),
+                        ),
+                        child: Text(
+                          'D$s',
+                          style: GoogleFonts.cinzel(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: isSelected ? Colors.white : Colors.white38,
+                          ),
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+              const SizedBox(height: 30),
+
               // ── Die face ────────────────────────────────────────────────
               AnimatedBuilder(
                 animation: Listenable.merge([
@@ -319,22 +347,21 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
                   _shakeCtrl,
                 ]),
                 builder: (context, _) {
-                  // Scale depends on current phase
                   double scale = 1.0;
-                  if (_isRolling) {
+                  if (_isRolling)
                     scale = _pulseAnim.value;
-                  } else if (_result != null && _result != 1) {
+                  else if (_result != null &&
+                      (_selectedSides != 20 || _result != 1))
                     scale = _revealAnim.value;
-                  }
 
                   return Transform.translate(
-                    offset: Offset(_shakeAnim.value, 0), // shake for nat 1
+                    offset: Offset(_shakeAnim.value, 0),
                     child: Transform.scale(
                       scale: scale.clamp(0.0, 2.0),
                       child: AnimatedContainer(
                         duration: const Duration(milliseconds: 250),
-                        width: 164,
-                        height: 164,
+                        width: 140,
+                        height: 140,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
                           color: _bgColor,
@@ -345,7 +372,7 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
                           child: Text(
                             '$_displayNumber',
                             style: GoogleFonts.cinzel(
-                              fontSize: 62,
+                              fontSize: 52,
                               fontWeight: FontWeight.w900,
                               color: _numberColor,
                               height: 1.0,
@@ -359,8 +386,6 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
               ),
 
               const SizedBox(height: 14),
-
-              // ── Status label ─────────────────────────────────────────────
               AnimatedSwitcher(
                 duration: const Duration(milliseconds: 300),
                 child: _statusLabel.isNotEmpty
@@ -381,7 +406,7 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
                       ),
               ),
 
-              const SizedBox(height: 16),
+              const SizedBox(height: 24),
 
               // ── Roll button ───────────────────────────────────────────────
               GestureDetector(
@@ -415,7 +440,7 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
                       const Icon(Icons.casino, color: Colors.white, size: 20),
                       const SizedBox(width: 10),
                       Text(
-                        _isRolling ? 'Rolling...' : 'Roll D20',
+                        _isRolling ? 'Rolling...' : 'Roll D$_selectedSides',
                         style: GoogleFonts.cinzel(
                           fontSize: 15,
                           fontWeight: FontWeight.bold,
