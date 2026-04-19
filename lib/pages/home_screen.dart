@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:dnd_app/pages/game_master.dart';
 import 'package:dnd_app/pages/room_entry_page.dart';
 import 'package:dnd_app/providers/player_provider.dart';
+import 'package:dnd_app/services/websocket_client.dart';
+import 'package:dnd_app/services/websocket_services.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -137,6 +139,8 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ],
                     ),
+                    const Spacer(),
+                    const _ServerStatusIndicator(),
                   ],
                 ),
                 const SizedBox(height: 60),
@@ -330,6 +334,71 @@ class _HomeButton extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+class _ServerStatusIndicator extends StatelessWidget {
+  const _ServerStatusIndicator();
+
+  @override
+  Widget build(BuildContext context) {
+    return ValueListenableBuilder<ConnectionStatus>(
+      valueListenable: ws.status,
+      builder: (context, status, _) {
+        Color color;
+        String label;
+        IconData icon;
+
+        switch (status) {
+          case ConnectionStatus.connected:
+            color = Colors.greenAccent;
+            label = 'ONLINE';
+            icon = Icons.cloud_done;
+            break;
+          case ConnectionStatus.connecting:
+            color = Colors.amberAccent;
+            label = 'CONNECTING';
+            icon = Icons.cloud_sync;
+            break;
+          case ConnectionStatus.error:
+            color = Colors.redAccent;
+            label = 'OFFLINE';
+            icon = Icons.cloud_off;
+            break;
+          case ConnectionStatus.disconnected:
+          default:
+            color = Colors.white24;
+            label = 'DISCONNECTED';
+            icon = Icons.cloud_queue;
+            break;
+        }
+
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(color: color.withValues(alpha: 0.2)),
+          ),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Icon(icon, color: color, size: 14),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: GoogleFonts.cinzel(
+                  fontSize: 9,
+                  fontWeight: FontWeight.bold,
+                  color: color,
+                  letterSpacing: 1,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

@@ -1,6 +1,9 @@
 import 'dart:async';
 import 'dart:convert';
+import 'package:flutter/foundation.dart'; // Added for ValueNotifier
 import 'package:web_socket_channel/web_socket_channel.dart';
+
+enum ConnectionStatus { connected, connecting, disconnected, error }
 
 class WebSocketService {
   WebSocketChannel? _channel;
@@ -11,9 +14,14 @@ class WebSocketService {
   Timer? _reconnectTimer;
   String _url = 'wss://dnd-companion-app.onrender.com/ws';
 
+  final ValueNotifier<ConnectionStatus> status =
+      ValueNotifier<ConnectionStatus>(ConnectionStatus.disconnected);
+
   /// Stream of all incoming WebSocket messages.
   /// Listeners on this stream remain active even if the connection drops and reconnects.
   Stream<dynamic> get stream => _controller.stream;
+
+  String _getTimestamp() => DateTime.now().toIso8601String().substring(11, 19);
 
   /// Establishes a connection to the server.
   Future<void> connect({String? url}) async {
@@ -22,17 +30,25 @@ class WebSocketService {
     _isConnecting = true;
 
     _cleanup();
-    print("🔌 Connecting to WebSocket: $_url");
+    status.value = ConnectionStatus.connecting;
+    print("[${_getTimestamp()}] 🔌 Connecting to WebSocket: $_url");
 
     try {
       _channel = WebSocketChannel.connect(Uri.parse(_url));
 
-      // Wait for the connection to be ready
-      await _channel!.ready;
-      print("✅ Connected to WebSocket");
+      // Wait for the connection to be ready with a 10s timeout
+      await _channel!.ready.timeout(
+        const Duration(seconds: 10),
+        onTimeout: () {
+          throw TimeoutException("Connection timed out after 10 seconds");
+        },
+      );
+
+      print("[${_getTimestamp()}] ✅ Connected to WebSocket");
+      status.value = ConnectionStatus.connected;
       _isConnecting = false;
 
-      // Start heartbeat to keep connection alive on Render
+      // Start heartbeat to keep connection alive on Render (every 20s)
       _startHeartbeat();
 
       // Listen for incoming messages
@@ -43,16 +59,19 @@ class WebSocketService {
           }
         },
         onDone: () {
-          print("📡 WebSocket connection closed by server.");
+          print(
+            "[${_getTimestamp()}] 📡 WebSocket connection closed by server.",
+          );
           _handleDisconnect();
         },
         onError: (error) {
-          print("⚠️ WebSocket error: $error");
+          print("[${_getTimestamp()}] ⚠️ WebSocket error: $error");
           _handleDisconnect();
         },
       );
     } catch (e) {
-      print(" Connection failed: $e");
+      print("[${_getTimestamp()}] ❌ Connection failed: $e");
+      status.value = ConnectionStatus.error;
       _isConnecting = false;
       _handleDisconnect();
     }
@@ -61,17 +80,20 @@ class WebSocketService {
   /// Handles disconnection by attempting to reconnect after a delay.
   void _handleDisconnect() {
     _cleanup();
+    if (status.value != ConnectionStatus.error) {
+      status.value = ConnectionStatus.disconnected;
+    }
     _reconnectTimer?.cancel();
-    _reconnectTimer = Timer(const Duration(seconds: 3), () {
-      print("🔄 Attempting to reconnect...");
+    _reconnectTimer = Timer(const Duration(seconds: 5), () {
+      print("[${_getTimestamp()}] 🔄 Attempting to reconnect...");
       connect();
     });
   }
 
-  /// Sends a small ping message every 30 seconds to prevent Render from timing out.
+  /// Sends a small ping message every 20 seconds to prevent Render from timing out.
   void _startHeartbeat() {
     _heartbeatTimer?.cancel();
-    _heartbeatTimer = Timer.periodic(const Duration(seconds: 30), (timer) {
+    _heartbeatTimer = Timer.periodic(const Duration(seconds: 20), (timer) {
       if (_channel != null) {
         send({'type': 'ping'});
       }
@@ -91,10 +113,12 @@ class WebSocketService {
       try {
         _channel!.sink.add(jsonEncode(data));
       } catch (e) {
-        print(" Error sending message: $e");
+        print("[${_getTimestamp()}] ❌ Error sending message: $e");
       }
     } else {
-      print(" Cannot send message: WebSocket is not connected.");
+      print(
+        "[${_getTimestamp()}] ⚠️ Cannot send message: WebSocket is not connected.",
+      );
     }
   }
 

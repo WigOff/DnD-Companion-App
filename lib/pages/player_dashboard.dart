@@ -198,7 +198,11 @@ class _HeaderBackground extends StatelessWidget {
                             'assets/images/races/${live.race.toLowerCase().replaceAll(' ', '_').replaceAll('-', '_')}.png',
                             fit: BoxFit.cover,
                             errorBuilder: (context, error, stackTrace) =>
-                                const Icon(Icons.person, color: Colors.white24, size: 40),
+                                const Icon(
+                                  Icons.person,
+                                  color: Colors.white24,
+                                  size: 40,
+                                ),
                           );
                         },
                       ),
