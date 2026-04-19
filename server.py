@@ -301,10 +301,19 @@ async def websocket_endpoint(websocket: WebSocket):
         while True:
             data = await websocket.receive_text()
             event = json.loads(data)
-            room_id_context = manager.websocket_to_room.get(websocket)
-            current_room = await manager.get_room(room_id_context) if room_id_context else None
+            
+            # ── 1. Handle Pings Immediately ──
+            # Reponding at the very start of the loop prevents timeouts if DB is slow
+            if event.get("type") == "ping":
+                continue
 
-            # ── Connection Management ──
+            # ── 2. Identify Room (using cache if already joined) ──
+            if current_room is None:
+                room_id_context = manager.websocket_to_room.get(websocket)
+                if room_id_context:
+                    current_room = await manager.get_room(room_id_context)
+            
+            # ── 3. Handle Create/Join ──
             if event["type"] == "create_room":
                 current_room = await manager.create_room()
                 manager.add_connection(websocket, current_room)
@@ -333,8 +342,7 @@ async def websocket_endpoint(websocket: WebSocket):
                     }))
                 continue
 
-            elif event["type"] == "ping":
-                continue
+
 
             # ── Require Room for all other actions ──
             if not current_room:
