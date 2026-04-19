@@ -8,6 +8,14 @@ import os
 from contextlib import asynccontextmanager
 from motor.motor_asyncio import AsyncIOMotorClient
 from dotenv import load_dotenv
+import logging
+
+# ─── Logging Setup ───────────────────────────────────────────────────────────
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(levelname)s:     %(message)s"
+)
+logger = logging.getLogger(__name__)
 
 load_dotenv()
 
@@ -24,7 +32,7 @@ async def lifespan(app: FastAPI):
     # Startup: Connect to MongoDB
     mongodb_uri = os.getenv("MONGODB_URI")
     if not mongodb_uri:
-        print("⚠️ MONGODB_URI not found in environment. Persistence will fail.")
+        logger.warning("⚠️ MONGODB_URI not found in environment. Persistence will fail.")
     else:
         db_helper.client = AsyncIOMotorClient(mongodb_uri)
         db_helper.db = db_helper.client.dnd_database
@@ -32,10 +40,10 @@ async def lifespan(app: FastAPI):
         # Explicitly verify the connection at startup
         try:
             await db_helper.client.admin.command('ping')
-            print("✅ Successfully pinged MongoDB Atlas. Connection is active.")
+            logger.info("✅ Successfully pinged MongoDB Atlas. Connection is active.")
         except Exception as e:
-            print(f"❌ Could not connect to MongoDB Atlas: {e}")
-            print("💡 Check your IP Whitelist on Atlas and ensure your password is correct.")
+            logger.error(f"❌ Could not connect to MongoDB Atlas: {e}")
+            logger.info("💡 Check your IP Whitelist on Atlas and ensure your password is correct.")
             db_helper.db = None
     
     try:
@@ -44,7 +52,7 @@ async def lifespan(app: FastAPI):
         # Shutdown: Close the connection
         if db_helper.client:
             db_helper.client.close()
-            print("🛑 Closed MongoDB connection")
+            logger.info("🛑 Closed MongoDB connection")
 
 app = FastAPI(lifespan=lifespan)
 
@@ -204,11 +212,11 @@ class Room:
                     {"room_id": self.room_id, "state": self.state},
                     upsert=True
                 )
-                print(f"💾 Room {self.room_id} saved to MongoDB.")
+                logger.info(f"💾 Room {self.room_id} saved to MongoDB.")
             except Exception as e:
-                print(f"❌ Error saving room {self.room_id} to MongoDB: {e}")
+                logger.error(f"❌ Error saving room {self.room_id} to MongoDB: {e}")
         else:
-            print(f"⚠️ Cannot save room {self.room_id}: Database not connected.")
+            logger.warning(f"⚠️ Cannot save room {self.room_id}: Database not connected.")
 
     async def broadcast(self, message_dict):
         final_data = json.dumps(message_dict)
@@ -242,7 +250,7 @@ class RoomManager:
             try:
                 room_doc = await db_helper.db.rooms.find_one({"room_id": room_id})
                 if room_doc:
-                    print(f"📂 Room {room_id} loaded from MongoDB.")
+                    logger.info(f"📂 Room {room_id} loaded from MongoDB.")
                     state = room_doc["state"]
                     # Migrations if needed
                     for p in state.get("players", {}).values():
@@ -257,7 +265,7 @@ class RoomManager:
                     self.rooms[room_id] = room
                     return room
             except Exception as e:
-                print(f"❌ Error loading room {room_id} from MongoDB: {e}")
+                logger.error(f"❌ Error loading room {room_id} from MongoDB: {e}")
         return None
 
     async def create_room(self):
@@ -591,8 +599,8 @@ async def websocket_endpoint(websocket: WebSocket):
             await current_room.broadcast(current_room.get_game_state_msg())
 
     except WebSocketDisconnect:
-        print("WebSocket disconnected")
+        logger.info("WebSocket disconnected")
     except Exception as e:
-        print(f"Error: {e}")
+        logger.error(f"Error: {e}")
     finally:
         manager.remove_connection(websocket)
