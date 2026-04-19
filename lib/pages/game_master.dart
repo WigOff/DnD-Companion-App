@@ -18,6 +18,7 @@ class _GameMasterState extends State<GameMaster> with TickerProviderStateMixin {
   final Map<String, int> _mpMods = {};
   final Map<String, int> _goldMods = {};
   final Map<String, int> _xpMods = {};
+  final Map<String, int> _acMods = {};
 
   late TabController _tabController;
   int _currentTab = 0;
@@ -267,7 +268,7 @@ class _GameMasterState extends State<GameMaster> with TickerProviderStateMixin {
                   ),
                 ),
                 subtitle: Text(
-                  '${player.race} ${player.playerClass}',
+                  '${player.race} ${player.playerClass}${player.subclass != 'None' ? ' (${player.subclass})' : ''}',
                   style: GoogleFonts.cinzel(
                     fontSize: 12,
                     color: Colors.white54,
@@ -353,6 +354,21 @@ class _GameMasterState extends State<GameMaster> with TickerProviderStateMixin {
                               onUpdate: (v) {
                                 provider.updatePlayer(
                                   player.copyWith(xp: player.xp + v),
+                                );
+                              },
+                            ),
+                            _buildStatModifier(
+                              label: 'AC',
+                              current: player.armorClass,
+                              max: null,
+                              val: _acMods[id] ?? 0,
+                              color: Colors.tealAccent.shade100,
+                              onValueChange: (v) => _acMods[id] = v,
+                              onUpdate: (v) {
+                                int newAC = player.armorClass + v;
+                                if (newAC < 0) newAC = 0;
+                                provider.updatePlayer(
+                                  player.copyWith(armorClass: newAC),
                                 );
                               },
                             ),

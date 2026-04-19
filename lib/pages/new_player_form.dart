@@ -5,6 +5,7 @@ import 'package:dnd_app/models/player.dart';
 import 'package:dnd_app/providers/player_provider.dart';
 import 'package:dnd_app/pages/player_dashboard.dart';
 import 'package:dnd_app/data/class_defaults.dart';
+import 'package:dnd_app/data/subclass_defaults.dart';
 
 /// Standalone new-player creation form.
 /// After successful creation, navigates to the player's own dashboard.
@@ -19,6 +20,8 @@ class _NewPlayerFormState extends State<NewPlayerForm> {
   String name = '';
   String race = kAvailableRaces.first;
   String playerClass = kAvailableClasses.first;
+  String subclass = 'None';
+  String subclassDescription = '';
 
   int str = 14, dex = 10, con = 14, intl = 6, wis = 8, cha = 8;
 
@@ -48,13 +51,15 @@ class _NewPlayerFormState extends State<NewPlayerForm> {
       maxHealth: 10 + con,
       mana: 10 + intl,
       maxMana: 10 + intl,
-      armorClass: 10 + dex,
+      armorClass: 10 + ((dex - 10) / 2).floor(),
       strength: str,
       dexterity: dex,
       constitution: con,
       intelligence: intl,
       wisdom: wis,
       charisma: cha,
+      subclass: subclass,
+      subclassDescription: subclassDescription,
       availablePoints: 0,
       proficiencyBonus: 2,
     );
@@ -90,10 +95,6 @@ class _NewPlayerFormState extends State<NewPlayerForm> {
   }
 
   Widget _buildStatRow(String label, int value, Function(int) onChanged) {
-    // Stats are locked for non-custom classes
-    final isCustom = playerClass == 'Custom';
-    final canIncrease = isCustom && pointsLeft > 0;
-    final canDecrease = isCustom && value > 0;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Row(
@@ -104,48 +105,15 @@ class _NewPlayerFormState extends State<NewPlayerForm> {
               style: GoogleFonts.cinzel(fontSize: 15, color: Colors.white70),
             ),
           ),
-          if (isCustom) ...[
-            IconButton(
-              icon: Icon(
-                Icons.remove_circle_outline,
-                color: canDecrease ? Colors.redAccent : Colors.white12,
-              ),
-              onPressed: canDecrease
-                  ? () => setState(() => onChanged(value - 1))
-                  : null,
+          Text(
+            '$value',
+            style: GoogleFonts.cinzel(
+              fontSize: 18,
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
             ),
-            SizedBox(
-              width: 32,
-              child: Text(
-                '$value',
-                textAlign: TextAlign.center,
-                style: GoogleFonts.cinzel(
-                  fontSize: 18,
-                  color: Colors.white,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            IconButton(
-              icon: Icon(
-                Icons.add_circle_outline,
-                color: canIncrease ? Colors.greenAccent : Colors.white12,
-              ),
-              onPressed: canIncrease
-                  ? () => setState(() => onChanged(value + 1))
-                  : null,
-            ),
-          ] else ...[
-            Text(
-              '$value',
-              style: GoogleFonts.cinzel(
-                fontSize: 18,
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(width: 12),
-          ],
+          ),
+          const SizedBox(width: 12),
         ],
       ),
     );
@@ -211,6 +179,47 @@ class _NewPlayerFormState extends State<NewPlayerForm> {
               onChanged: (v) => setState(() => race = v!),
             ),
             const SizedBox(height: 12),
+            // Race Portrait
+            Center(
+              child: Container(
+                width: 130,
+                height: 130,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  gradient: LinearGradient(
+                    colors: [Colors.amber.shade700, Colors.amber.shade200],
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.5),
+                      blurRadius: 15,
+                      spreadRadius: 2,
+                    ),
+                    BoxShadow(
+                      color: Colors.amber.withOpacity(0.2),
+                      blurRadius: 20,
+                      spreadRadius: 5,
+                    ),
+                  ],
+                ),
+                padding: const EdgeInsets.all(3),
+                child: Container(
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    image: DecorationImage(
+                      image: AssetImage(
+                        'assets/images/races/${race.toLowerCase().replaceAll('-', '_')}.png',
+                      ),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               initialValue: playerClass,
               dropdownColor: const Color(0xFF1A0A2E),
@@ -229,8 +238,92 @@ class _NewPlayerFormState extends State<NewPlayerForm> {
                   intl = defaults['intelligence']!;
                   wis = defaults['wisdom']!;
                   cha = defaults['charisma']!;
+
+                  // Reset subclass when class changes
+                  subclass = 'None';
+                  subclassDescription = '';
                 });
               },
+            ),
+            const SizedBox(height: 12),
+
+            // Subclass Selection
+            DropdownButtonFormField<String>(
+              value: subclass == 'None' ? null : subclass,
+              dropdownColor: const Color(0xFF1A0A2E),
+              style: GoogleFonts.cinzel(color: Colors.white, fontSize: 13),
+              decoration: _inputDeco('Subclass', Icons.workspace_premium),
+              items: (kClassInfo[playerClass]?.subclasses ?? [])
+                  .map(
+                    (s) => DropdownMenuItem(value: s.name, child: Text(s.name)),
+                  )
+                  .toList(),
+              onChanged: (v) {
+                setState(() {
+                  subclass = v!;
+                  subclassDescription =
+                      kClassInfo[playerClass]
+                          ?.subclasses
+                          .firstWhere((s) => s.name == v)
+                          .description ??
+                      '';
+                });
+              },
+            ),
+
+            const SizedBox(height: 16),
+
+            // Info Panel
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.05),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.1)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    playerClass,
+                    style: GoogleFonts.cinzel(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.deepPurpleAccent,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    kClassInfo[playerClass]?.description ?? '',
+                    style: GoogleFonts.cinzel(
+                      fontSize: 12,
+                      color: Colors.white70,
+                    ),
+                  ),
+                  if (subclass != 'None') ...[
+                    const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                      child: Divider(color: Colors.white10),
+                    ),
+                    Text(
+                      subclass,
+                      style: GoogleFonts.cinzel(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.amberAccent,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      subclassDescription,
+                      style: GoogleFonts.cinzel(
+                        fontSize: 11,
+                        color: Colors.white60,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
             ),
 
             const SizedBox(height: 28),
@@ -318,19 +411,28 @@ class _NewPlayerFormState extends State<NewPlayerForm> {
   }
 
   Widget _sectionHeader(String title, IconData icon) {
-    return Row(
-      children: [
-        Icon(icon, color: Colors.deepPurpleAccent, size: 18),
-        const SizedBox(width: 8),
-        Text(
-          title,
-          style: GoogleFonts.cinzel(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-            color: Colors.white70,
-          ),
+    return Container(
+      decoration: BoxDecoration(
+        border: Border(
+          bottom: BorderSide(color: Colors.amber.withOpacity(0.2), width: 1),
         ),
-      ],
+      ),
+      padding: const EdgeInsets.only(bottom: 4),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.amber.shade300, size: 20),
+          const SizedBox(width: 8),
+          Text(
+            title.toUpperCase(),
+            style: GoogleFonts.cinzel(
+              fontSize: 16,
+              fontWeight: FontWeight.bold,
+              color: Colors.amber.shade200,
+              letterSpacing: 1.5,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

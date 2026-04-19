@@ -53,15 +53,8 @@ class PlayerDashboard extends StatelessWidget {
                           backgroundColor: Colors.deepPurple.withValues(
                             alpha: 0.5,
                           ),
-                          child: Text(
-                            live.name.isNotEmpty
-                                ? live.name[0].toUpperCase()
-                                : '?',
-                            style: GoogleFonts.cinzel(
-                              fontSize: 32,
-                              color: Colors.white,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          backgroundImage: AssetImage(
+                            'assets/images/races/${live.race.toLowerCase().replaceAll('-', '_')}.png',
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -80,6 +73,19 @@ class PlayerDashboard extends StatelessWidget {
                             color: Colors.white.withValues(alpha: 0.55),
                           ),
                         ),
+                        if (live.subclass != 'None')
+                          Padding(
+                            padding: const EdgeInsets.only(top: 4.0),
+                            child: Text(
+                              live.subclass,
+                              style: GoogleFonts.cinzel(
+                                fontSize: 13,
+                                color: Colors.amberAccent,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.1,
+                              ),
+                            ),
+                          ),
                       ],
                     ),
                   ),

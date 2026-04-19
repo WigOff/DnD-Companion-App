@@ -4,7 +4,8 @@ import 'package:web_socket_channel/web_socket_channel.dart';
 
 class WebSocketService {
   WebSocketChannel? _channel;
-  final StreamController<dynamic> _controller = StreamController<dynamic>.broadcast();
+  final StreamController<dynamic> _controller =
+      StreamController<dynamic>.broadcast();
   bool _isConnecting = false;
   Timer? _heartbeatTimer;
   Timer? _reconnectTimer;
@@ -25,12 +26,12 @@ class WebSocketService {
 
     try {
       _channel = WebSocketChannel.connect(Uri.parse(_url));
-      
+
       // Wait for the connection to be ready
       await _channel!.ready;
       print("✅ Connected to WebSocket");
       _isConnecting = false;
-      
+
       // Start heartbeat to keep connection alive on Render
       _startHeartbeat();
 
@@ -51,7 +52,7 @@ class WebSocketService {
         },
       );
     } catch (e) {
-      print("❌ Connection failed: $e");
+      print(" Connection failed: $e");
       _isConnecting = false;
       _handleDisconnect();
     }
@@ -90,10 +91,10 @@ class WebSocketService {
       try {
         _channel!.sink.add(jsonEncode(data));
       } catch (e) {
-        print("❌ Error sending message: $e");
+        print(" Error sending message: $e");
       }
     } else {
-      print("🚫 Cannot send message: WebSocket is not connected.");
+      print(" Cannot send message: WebSocket is not connected.");
     }
   }
 

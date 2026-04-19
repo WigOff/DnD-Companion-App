@@ -26,6 +26,7 @@ STATE_FILE = "game_state.json"
 
 CLASS_DEFAULTS = {
     "Fighter":   {"strength":14,"dexterity":10,"constitution":14,"intelligence":6,"wisdom":8,"charisma":8},
+    "Artificer": {"strength":8, "dexterity":10,"constitution":12,"intelligence":15,"wisdom":10,"charisma":8},
     "Barbarian": {"strength":15,"dexterity":10,"constitution":15,"intelligence":5,"wisdom":7,"charisma":8},
     "Paladin":   {"strength":13,"dexterity":8,"constitution":13,"intelligence":6,"wisdom":8,"charisma":12},
     "Ranger":    {"strength":10,"dexterity":14,"constitution":10,"intelligence":8,"wisdom":12,"charisma":6},
@@ -37,7 +38,6 @@ CLASS_DEFAULTS = {
     "Wizard":    {"strength":6,"dexterity":10,"constitution":10,"intelligence":15,"wisdom":10,"charisma":9},
     "Sorcerer":  {"strength":6,"dexterity":12,"constitution":10,"intelligence":10,"wisdom":8,"charisma":14},
     "Warlock":   {"strength":8,"dexterity":10,"constitution":12,"intelligence":8,"wisdom":8,"charisma":14},
-    "Custom":    {"strength":10,"dexterity":10,"constitution":10,"intelligence":10,"wisdom":10,"charisma":10}
 }
 
 def save_state():
@@ -152,13 +152,16 @@ async def websocket_endpoint(websocket: WebSocket):
 
                         threshold = lvl * 10
                         while xp >= threshold:
+                            if lvl >= 20:
+                                break
                             lvl += 1
                             new_data["level"] = lvl
-                            new_data["availablePoints"] += 2
+                            new_data["availablePoints"] += 1
+                            new_data["proficiencyBonus"] = 2 + ((lvl - 1) // 4)
                             game_state["log"].append({
                                 "id": str(uuid.uuid4()),
                                 "category": "level_up",
-                                "message": f"⬆️ {p_name} reached Level {lvl} and gained 2 stat points!",
+                                "message": f"⬆️ {p_name} reached Level {lvl} and gained 1 stat point!",
                                 "playerid": pid
                             })
                             print(f">>> AUTO LEVEL UP: {p_name} to Level {lvl}")
@@ -216,18 +219,20 @@ async def websocket_endpoint(websocket: WebSocket):
                 pid = str(event.get("playerid"))
                 if pid in game_state["players"]:
                     p = game_state["players"][pid]
-                    p["level"] = p.get("level", 1) + 1
-                    p["availablePoints"] = p.get("availablePoints", 0) + 2
-                    p_name = p.get("name", "Unknown")
-                    
-                    game_state["log"].append({
-                        "id": str(uuid.uuid4()),
-                        "category": "level_up",
-                        "message": f"⬆️ {p_name} reached Level {p['level']} and gained 2 stat points",
-                        "playerid": pid
-                    })
-                    save_state()
-                    print(f"Level Up: {p_name} to {p['level']}")
+                    if p.get("level", 1) < 20:
+                        p["level"] = p.get("level", 1) + 1
+                        p["availablePoints"] = p.get("availablePoints", 0) + 1
+                        p["proficiencyBonus"] = 2 + ((p["level"] - 1) // 4)
+                        p_name = p.get("name", "Unknown")
+                        
+                        game_state["log"].append({
+                            "id": str(uuid.uuid4()),
+                            "category": "level_up",
+                            "message": f"⬆️ {p_name} reached Level {p['level']} and gained 1 stat point",
+                            "playerid": pid
+                        })
+                        save_state()
+                        print(f"Level Up: {p_name} to {p['level']}")
 
             elif event["type"] == "allocate_stat":
                 pid = str(event.get("playerid"))

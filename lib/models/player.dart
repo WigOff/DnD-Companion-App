@@ -20,6 +20,8 @@ class Player {
   final int intelligence;
   final int wisdom;
   final int charisma;
+  final String subclass;
+  final String subclassDescription;
 
   Player({
     this.id,
@@ -43,6 +45,8 @@ class Player {
     required this.intelligence,
     required this.wisdom,
     required this.charisma,
+    this.subclass = 'None',
+    this.subclassDescription = '',
   });
 
   factory Player.fromJson(Map<String, dynamic> json) {
@@ -68,6 +72,8 @@ class Player {
       intelligence: json['intelligence'],
       wisdom: json['wisdom'],
       charisma: json['charisma'],
+      subclass: json['subclass'] ?? 'None',
+      subclassDescription: json['subclassDescription'] ?? '',
     );
   }
 
@@ -94,6 +100,8 @@ class Player {
       intelligence: map['intelligence'],
       wisdom: map['wisdom'],
       charisma: map['charisma'],
+      subclass: map['subclass'] ?? 'None',
+      subclassDescription: map['subclassDescription'] ?? '',
     );
   }
 
@@ -120,6 +128,8 @@ class Player {
       'intelligence': intelligence,
       'wisdom': wisdom,
       'charisma': charisma,
+      'subclass': subclass,
+      'subclassDescription': subclassDescription,
     };
   }
 
@@ -146,8 +156,13 @@ class Player {
       'intelligence': intelligence,
       'wisdom': wisdom,
       'charisma': charisma,
+      'subclass': subclass,
+      'subclassDescription': subclassDescription,
     };
   }
+
+  /// Calculates the proficiency bonus based on level (1-4: +2, 5-8: +3, etc.)
+  int get calculatedProficiencyBonus => 2 + ((level - 1) ~/ 4);
 
   Player copyWith({
     String? id,
@@ -171,6 +186,8 @@ class Player {
     int? intelligence,
     int? wisdom,
     int? charisma,
+    String? subclass,
+    String? subclassDescription,
   }) {
     return Player(
       id: id ?? this.id,
@@ -194,6 +211,8 @@ class Player {
       intelligence: intelligence ?? this.intelligence,
       wisdom: wisdom ?? this.wisdom,
       charisma: charisma ?? this.charisma,
+      subclass: subclass ?? this.subclass,
+      subclassDescription: subclassDescription ?? this.subclassDescription,
     );
   }
 }

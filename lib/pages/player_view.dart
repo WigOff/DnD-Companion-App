@@ -19,8 +19,10 @@ class _PlayerViewState extends State<PlayerView> {
 
   // New Player Form State
   String name = '';
-  String race = '';
-  String playerClass = '';
+  String race = 'Human';
+  String playerClass = 'Fighter';
+  String subclass = 'None';
+  String subclassDescription = '';
 
   int str = 0;
   int dex = 0;
@@ -62,13 +64,15 @@ class _PlayerViewState extends State<PlayerView> {
       maxHealth: 10 + con,
       mana: 10 + intl,
       maxMana: 10 + intl,
-      armorClass: 10 + dex,
+      armorClass: 10 + ((dex - 10) / 2).floor(),
       strength: str,
       dexterity: dex,
       constitution: con,
       intelligence: intl,
       wisdom: wis,
       charisma: cha,
+      subclass: subclass,
+      subclassDescription: subclassDescription,
       proficiencyBonus: 2,
     );
     await provider.addPlayer(newPlayer);
@@ -137,6 +141,16 @@ class _PlayerViewState extends State<PlayerView> {
               TextField(
                 decoration: const InputDecoration(labelText: 'Class'),
                 onChanged: (val) => playerClass = val,
+              ),
+              TextField(
+                decoration: const InputDecoration(labelText: 'Subclass'),
+                onChanged: (val) => subclass = val,
+              ),
+              TextField(
+                decoration: const InputDecoration(
+                  labelText: 'Subclass Description',
+                ),
+                onChanged: (val) => subclassDescription = val,
               ),
               const SizedBox(height: 24),
               Text(
@@ -312,16 +326,62 @@ class _PlayerViewState extends State<PlayerView> {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              Text(
-                                'Class: ${loadedPlayer!.playerClass}',
-                                style: const TextStyle(fontSize: 16),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Class: ${loadedPlayer!.playerClass}',
+                                    style: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  if (loadedPlayer!.subclass != 'None')
+                                    Text(
+                                      'Subclass: ${loadedPlayer!.subclass}',
+                                      style: TextStyle(
+                                        fontSize: 14,
+                                        color: Colors.deepPurple.shade300,
+                                        fontStyle: FontStyle.italic,
+                                      ),
+                                    ),
+                                ],
                               ),
-                              Text(
-                                'Race: ${loadedPlayer!.race}',
-                                style: const TextStyle(fontSize: 16),
+                              Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Container(
+                                    width: 60,
+                                    height: 60,
+                                    decoration: BoxDecoration(
+                                      shape: BoxShape.circle,
+                                      image: DecorationImage(
+                                        image: AssetImage(
+                                          'assets/images/races/${loadedPlayer!.race.toLowerCase().replaceAll('-', '_')}.png',
+                                        ),
+                                        fit: BoxFit.cover,
+                                      ),
+                                    ),
+                                  ),
+                                  Text(
+                                    'Race: ${loadedPlayer!.race}',
+                                    style: const TextStyle(fontSize: 14),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
+                          if (loadedPlayer!.subclassDescription.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(top: 8.0),
+                              child: Text(
+                                loadedPlayer!.subclassDescription,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.grey,
+                                ),
+                              ),
+                            ),
                           const SizedBox(height: 12),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,

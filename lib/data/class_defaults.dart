@@ -7,6 +7,14 @@ const Map<String, Map<String, int>> kClassDefaults = {
     "wisdom": 8,
     "charisma": 8,
   },
+  "Artificer": {
+    "strength": 8,
+    "dexterity": 10,
+    "constitution": 12,
+    "intelligence": 15,
+    "wisdom": 10,
+    "charisma": 8,
+  },
   "Barbarian": {
     "strength": 15,
     "dexterity": 10,
@@ -95,18 +103,11 @@ const Map<String, Map<String, int>> kClassDefaults = {
     "wisdom": 8,
     "charisma": 14,
   },
-  "Custom": {
-    "strength": 10,
-    "dexterity": 10,
-    "constitution": 10,
-    "intelligence": 10,
-    "wisdom": 10,
-    "charisma": 10,
-  },
 };
 
 const List<String> kAvailableClasses = [
   "Fighter",
+  "Artificer",
   "Barbarian",
   "Paladin",
   "Ranger",
@@ -118,7 +119,6 @@ const List<String> kAvailableClasses = [
   "Wizard",
   "Sorcerer",
   "Warlock",
-  "Custom",
 ];
 
 const List<String> kAvailableRaces = [
