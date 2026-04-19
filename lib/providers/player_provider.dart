@@ -94,6 +94,27 @@ class PlayerProvider with ChangeNotifier {
     ws.send({'type': 'allocate_stat', 'playerid': playerId, 'stat': statKey});
   }
 
+  void grantReward(String playerId, String rewardType, String name) {
+    ws.send({
+      'type': 'grant_reward',
+      'playerid': playerId,
+      'reward_type': rewardType,
+      'name': name,
+    });
+  }
+
+  void equipWeapon(String playerId, String weapon) {
+    ws.send({'type': 'equip_weapon', 'playerid': playerId, 'weapon': weapon});
+  }
+
+  void attack(String playerId) {
+    ws.send({'type': 'attack', 'playerid': playerId});
+  }
+
+  void castSpell(String playerId, String spellName) {
+    ws.send({'type': 'cast_spell', 'playerid': playerId, 'spell': spellName});
+  }
+
   Future<void> addPlayer(Player player) async {
     ws.send({'type': 'addnew', 'player': player.toJson()});
   }

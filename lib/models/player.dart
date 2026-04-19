@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class Player {
   final String? id;
   final String name;
@@ -22,6 +24,10 @@ class Player {
   final int charisma;
   final String subclass;
   final String subclassDescription;
+  final String weapon;
+  final List<String> spells;
+  final List<String> inventoryWeapons;
+  final List<String> knownSpells;
 
   Player({
     this.id,
@@ -47,6 +53,10 @@ class Player {
     required this.charisma,
     this.subclass = 'None',
     this.subclassDescription = '',
+    this.weapon = '',
+    this.spells = const [],
+    this.inventoryWeapons = const [],
+    this.knownSpells = const [],
   });
 
   factory Player.fromJson(Map<String, dynamic> json) {
@@ -74,6 +84,10 @@ class Player {
       charisma: json['charisma'],
       subclass: json['subclass'] ?? 'None',
       subclassDescription: json['subclassDescription'] ?? '',
+      weapon: json['weapon'] ?? '',
+      spells: List<String>.from(json['spells'] ?? []),
+      inventoryWeapons: List<String>.from(json['inventoryWeapons'] ?? []),
+      knownSpells: List<String>.from(json['knownSpells'] ?? []),
     );
   }
 
@@ -102,7 +116,25 @@ class Player {
       charisma: map['charisma'],
       subclass: map['subclass'] ?? 'None',
       subclassDescription: map['subclassDescription'] ?? '',
+      weapon: map['weapon'] ?? '',
+      spells: _decodeList(map['spells']),
+      inventoryWeapons: _decodeList(map['inventoryWeapons']),
+      knownSpells: _decodeList(map['knownSpells']),
     );
+  }
+
+  /// Decode a list that may be stored as a JSON string (SQLite) or native list.
+  static List<String> _decodeList(dynamic value) {
+    if (value == null) return [];
+    if (value is List) return List<String>.from(value);
+    if (value is String) {
+      try {
+        return List<String>.from(jsonDecode(value));
+      } catch (_) {
+        return [];
+      }
+    }
+    return [];
   }
 
   Map<String, dynamic> toJson() {
@@ -130,9 +162,14 @@ class Player {
       'charisma': charisma,
       'subclass': subclass,
       'subclassDescription': subclassDescription,
+      'weapon': weapon,
+      'spells': spells,
+      'inventoryWeapons': inventoryWeapons,
+      'knownSpells': knownSpells,
     };
   }
 
+  /// For SQLite — lists are stored as JSON-encoded strings.
   Map<String, dynamic> toMap() {
     return {
       'id': id,
@@ -158,6 +195,10 @@ class Player {
       'charisma': charisma,
       'subclass': subclass,
       'subclassDescription': subclassDescription,
+      'weapon': weapon,
+      'spells': jsonEncode(spells),
+      'inventoryWeapons': jsonEncode(inventoryWeapons),
+      'knownSpells': jsonEncode(knownSpells),
     };
   }
 
@@ -188,6 +229,10 @@ class Player {
     int? charisma,
     String? subclass,
     String? subclassDescription,
+    String? weapon,
+    List<String>? spells,
+    List<String>? inventoryWeapons,
+    List<String>? knownSpells,
   }) {
     return Player(
       id: id ?? this.id,
@@ -213,6 +258,10 @@ class Player {
       charisma: charisma ?? this.charisma,
       subclass: subclass ?? this.subclass,
       subclassDescription: subclassDescription ?? this.subclassDescription,
+      weapon: weapon ?? this.weapon,
+      spells: spells ?? this.spells,
+      inventoryWeapons: inventoryWeapons ?? this.inventoryWeapons,
+      knownSpells: knownSpells ?? this.knownSpells,
     );
   }
 }

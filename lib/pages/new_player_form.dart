@@ -6,6 +6,7 @@ import 'package:dnd_app/providers/player_provider.dart';
 import 'package:dnd_app/pages/player_dashboard.dart';
 import 'package:dnd_app/data/class_defaults.dart';
 import 'package:dnd_app/data/subclass_defaults.dart';
+import 'package:dnd_app/data/class_loadouts.dart';
 
 /// Standalone new-player creation form.
 /// After successful creation, navigates to the player's own dashboard.
@@ -39,6 +40,10 @@ class _NewPlayerFormState extends State<NewPlayerForm> {
 
     final provider = context.read<PlayerProvider>();
 
+    final loadout = kClassLoadouts[playerClass.trim()];
+    final starterWeapon = loadout?.weapon ?? 'Dagger';
+    final starterSpells = loadout?.spells ?? [];
+
     final newPlayer = Player(
       name: name.trim(),
       race: race.isEmpty ? 'Unknown' : race.trim(),
@@ -62,6 +67,10 @@ class _NewPlayerFormState extends State<NewPlayerForm> {
       subclassDescription: subclassDescription,
       availablePoints: 0,
       proficiencyBonus: 2,
+      weapon: starterWeapon,
+      spells: List<String>.from(starterSpells),
+      inventoryWeapons: [starterWeapon],
+      knownSpells: List<String>.from(starterSpells),
     );
 
     try {

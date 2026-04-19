@@ -18,11 +18,16 @@ class DatabaseHelper {
     final dbPath = await getDatabasesPath();
     final path = join(dbPath, filePath);
 
-    return await openDatabase(path, version: 5, onCreate: _createDB, onUpgrade: _onUpgrade);
+    return await openDatabase(
+      path,
+      version: 6,
+      onCreate: _createDB,
+      onUpgrade: _onUpgrade,
+    );
   }
 
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 5) {
+    if (oldVersion < 6) {
       await db.execute('DROP TABLE IF EXISTS players');
       await _createDB(db, newVersion);
     }
@@ -53,14 +58,22 @@ class DatabaseHelper {
         wisdom INTEGER NOT NULL,
         charisma INTEGER NOT NULL,
         subclass TEXT NOT NULL,
-        subclassDescription TEXT NOT NULL
+        subclassDescription TEXT NOT NULL,
+        weapon TEXT NOT NULL,
+        spells TEXT NOT NULL,
+        inventoryWeapons TEXT NOT NULL,
+        knownSpells TEXT NOT NULL
       )
     ''');
   }
 
   Future<Player> create(Player player) async {
     final db = await instance.database;
-    await db.insert('players', player.toMap(), conflictAlgorithm: ConflictAlgorithm.replace);
+    await db.insert(
+      'players',
+      player.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
     return player;
   }
 
@@ -100,10 +113,10 @@ class DatabaseHelper {
 
   Future<int> delete(String id) async {
     final db = await instance.database;
- 
+
     return await db.delete('players', where: 'id = ?', whereArgs: [id]);
   }
- 
+
   Future<void> clearAll() async {
     final db = await instance.database;
     await db.delete('players');
