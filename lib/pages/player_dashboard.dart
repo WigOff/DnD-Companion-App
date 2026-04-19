@@ -68,9 +68,7 @@ class _PlayerDashboardState extends State<PlayerDashboard>
   }
 
   Widget _buildSliverHeader(BuildContext ctx, Player live) {
-    final hasSubclass = live.subclass.isNotEmpty && live.subclass != 'None';
-    // Dynamic height: expanded = 240 base + 24 if subclass is showing
-    final expandedHeight = hasSubclass ? 252.0 : 228.0;
+    const expandedHeight = 420.0;
 
     return SliverOverlapAbsorber(
       handle: NestedScrollView.sliverOverlapAbsorberHandleFor(ctx),
@@ -83,13 +81,9 @@ class _PlayerDashboardState extends State<PlayerDashboard>
           icon: const Icon(Icons.arrow_back_ios_new, color: Colors.white70),
           onPressed: () => Navigator.pop(context),
         ),
-        flexibleSpace: LayoutBuilder(
-          builder: (_, constraints) {
-            return FlexibleSpaceBar(
-              collapseMode: CollapseMode.pin,
-              background: _HeaderBackground(live: live, hasSubclass: hasSubclass),
-            );
-          },
+        flexibleSpace: FlexibleSpaceBar(
+          collapseMode: CollapseMode.parallax,
+          background: _HeaderBackground(live: live),
         ),
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(48),
@@ -115,7 +109,10 @@ class _PlayerDashboardState extends State<PlayerDashboard>
               unselectedLabelColor: Colors.white38,
               tabs: const [
                 Tab(icon: Icon(Icons.bar_chart, size: 18), text: 'Stats'),
-                Tab(icon: Icon(Icons.flash_on, size: 18), text: 'Actions & Log'),
+                Tab(
+                  icon: Icon(Icons.flash_on, size: 18),
+                  text: 'Actions & Log',
+                ),
               ],
             ),
           ),
@@ -129,112 +126,159 @@ class _PlayerDashboardState extends State<PlayerDashboard>
 
 class _HeaderBackground extends StatelessWidget {
   final Player live;
-  final bool hasSubclass;
-  const _HeaderBackground({required this.live, required this.hasSubclass});
+  const _HeaderBackground({required this.live});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF2D1B69), Color(0xFF0D0D20)],
-          stops: [0.0, 1.0],
+    final hasSubclass = live.subclass.isNotEmpty && live.subclass != 'None';
+
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        // Base Gradient
+        Container(
+          decoration: const BoxDecoration(
+            gradient: LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFF1A1A35), Color(0xFF08081A)],
+            ),
+          ),
         ),
-      ),
-      child: SafeArea(
-        bottom: false,
-        child: Padding(
-          padding: const EdgeInsets.only(bottom: 56), // space for TabBar
+        // Decorative background elements
+        Positioned(
+          top: -100,
+          right: -100,
+          child: Container(
+            width: 300,
+            height: 300,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.deepPurpleAccent.withValues(alpha: 0.05),
+            ),
+          ),
+        ),
+        // Main Content
+        SafeArea(
           child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              // Avatar
-              Container(
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.deepPurpleAccent.withValues(alpha: 0.5),
-                      blurRadius: 20,
-                      spreadRadius: 2,
-                    ),
-                  ],
-                ),
-                child: CircleAvatar(
-                  radius: 40,
-                  backgroundColor: Colors.deepPurple.withValues(alpha: 0.4),
-                  backgroundImage: AssetImage(
-                    'assets/images/races/${live.race.toLowerCase().replaceAll('-', '_')}.png',
-                  ),
-                  onBackgroundImageError: (_, __) {},
-                ),
-              ),
-              const SizedBox(height: 10),
-              // Character Name
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  child: Text(
-                    live.name,
-                    style: GoogleFonts.cinzel(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                      shadows: [
-                        Shadow(
-                          color: Colors.deepPurpleAccent.withValues(alpha: 0.6),
-                          blurRadius: 12,
+              const SizedBox(height: 60), // Clear the back button
+              // Avatar with glow
+              Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    width: 110,
+                    height: 110,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: Colors.deepPurpleAccent.withValues(alpha: 0.3),
+                        width: 2,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.deepPurpleAccent.withValues(alpha: 0.2),
+                          blurRadius: 30,
+                          spreadRadius: 5,
                         ),
                       ],
                     ),
                   ),
-                ),
+                  CircleAvatar(
+                    radius: 48,
+                    backgroundColor: Colors.deepPurple.withValues(alpha: 0.3),
+                    backgroundImage: AssetImage(
+                      'assets/images/races/${live.race.toLowerCase().replaceAll('-', '_')}.png',
+                    ),
+                  ),
+                ],
               ),
-              const SizedBox(height: 4),
-              // Race · Class · Level
-              Text(
-                '${live.race}  ·  ${live.playerClass}  ·  Level ${live.level}',
-                style: GoogleFonts.cinzel(
-                  fontSize: 12,
-                  color: Colors.white.withValues(alpha: 0.5),
-                  letterSpacing: 0.5,
-                ),
-              ),
-              // Subclass badge
-              if (hasSubclass) ...[
-                const SizedBox(height: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.amberAccent.withValues(alpha: 0.25),
-                        Colors.amber.withValues(alpha: 0.1),
+              const SizedBox(height: 16),
+              // Character Info Glass Card
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(24),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 16,
+                      horizontal: 24,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.03),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.1),
+                      ),
+                    ),
+                    child: Column(
+                      children: [
+                        FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(
+                            live.name.toUpperCase(),
+                            style: GoogleFonts.cinzel(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.white,
+                              letterSpacing: 2,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '${live.race} ◈ ${live.playerClass} ◈ level ${live.level}'
+                              .toUpperCase(),
+                          style: GoogleFonts.cinzel(
+                            fontSize: 10,
+                            color: Colors.white54,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 1.5,
+                          ),
+                        ),
+                        if (hasSubclass) ...[
+                          const SizedBox(height: 12),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 6,
+                            ),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.amberAccent.withValues(alpha: 0.2),
+                                  Colors.orangeAccent.withValues(alpha: 0.1),
+                                ],
+                              ),
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.amberAccent.withValues(
+                                  alpha: 0.3,
+                                ),
+                              ),
+                            ),
+                            child: Text(
+                              live.subclass.toUpperCase(),
+                              style: GoogleFonts.cinzel(
+                                fontSize: 11,
+                                color: Colors.amberAccent,
+                                fontWeight: FontWeight.w800,
+                                letterSpacing: 1.2,
+                              ),
+                            ),
+                          ),
+                        ],
                       ],
                     ),
-                    borderRadius: BorderRadius.circular(20),
-                    border: Border.all(
-                      color: Colors.amberAccent.withValues(alpha: 0.4),
-                    ),
-                  ),
-                  child: Text(
-                    live.subclass,
-                    style: GoogleFonts.cinzel(
-                      fontSize: 11,
-                      color: Colors.amberAccent,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 1.2,
-                    ),
                   ),
                 ),
-              ],
+              ),
+              const Spacer(), // Dynamically pushes everything away from bottom
+              const SizedBox(height: 64), // Minimum buffer from Tabs
             ],
           ),
         ),
-      ),
+      ],
     );
   }
 }
@@ -445,9 +489,15 @@ class _StatsTab extends StatelessWidget {
 
                 _SectionLabel('COMBAT INFO'),
                 const SizedBox(height: 8),
-                _InfoRow('XP to Next Level', '${(live.level * 10) - live.xp} xp'),
+                _InfoRow(
+                  'XP to Next Level',
+                  '${(live.level * 10) - live.xp} xp',
+                ),
                 _InfoRow('Proficiency Bonus', '+${live.proficiencyBonus}'),
-                _InfoRow('Equipped Weapon', live.weapon.isEmpty ? '—' : live.weapon),
+                _InfoRow(
+                  'Equipped Weapon',
+                  live.weapon.isEmpty ? '—' : live.weapon,
+                ),
               ]),
             ),
           ),
@@ -496,7 +546,8 @@ class _ActionsTab extends StatelessWidget {
                 if (live.knownSpells.isEmpty)
                   _EmptyState(
                     icon: Icons.auto_fix_high,
-                    message: 'No spells known yet.\nYour GM can grant you spells.',
+                    message:
+                        'No spells known yet.\nYour GM can grant you spells.',
                     color: Colors.deepPurpleAccent,
                   )
                 else
@@ -629,8 +680,9 @@ class _WeaponSection extends StatelessWidget {
           ],
           const SizedBox(height: 12),
           ElevatedButton.icon(
-            onPressed:
-                live.weapon.isNotEmpty ? () => provider.attack(live.id!) : null,
+            onPressed: live.weapon.isNotEmpty
+                ? () => provider.attack(live.id!)
+                : null,
             icon: const Icon(Icons.gavel, size: 18),
             label: Text(
               live.weapon.isNotEmpty
@@ -675,8 +727,8 @@ class _SpellSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final validSpell = selectedSpell != null &&
-            live.knownSpells.contains(selectedSpell)
+    final validSpell =
+        selectedSpell != null && live.knownSpells.contains(selectedSpell)
         ? selectedSpell
         : null;
     final spellInfo = validSpell != null ? kAllSpells[validSpell] : null;
@@ -724,10 +776,10 @@ class _SpellSection extends StatelessWidget {
               final info = kAllSpells[s];
               final suffix = info != null
                   ? (info.healing
-                      ? '  💚 heal ${info.damage}'
-                      : info.damage != '0'
-                          ? '  (${info.damage})'
-                          : '  ✦ utility')
+                        ? '  💚 heal ${info.damage}'
+                        : info.damage != '0'
+                        ? '  (${info.damage})'
+                        : '  ✦ utility')
                   : '';
               return DropdownMenuItem(
                 value: s,
@@ -750,7 +802,9 @@ class _SpellSection extends StatelessWidget {
                 : null,
             icon: const Icon(Icons.auto_fix_high, size: 18),
             label: Text(
-              validSpell != null ? '✨  Cast $validSpell' : 'Select a spell first',
+              validSpell != null
+                  ? '✨  Cast $validSpell'
+                  : 'Select a spell first',
               style: GoogleFonts.cinzel(
                 fontWeight: FontWeight.bold,
                 fontSize: 13,
@@ -916,8 +970,8 @@ class _InventoryChips extends StatelessWidget {
         final Color chipColor = isEquipped
             ? Colors.orangeAccent
             : isSpell
-                ? (isHealing ? Colors.greenAccent : Colors.deepPurpleAccent)
-                : Colors.white54;
+            ? (isHealing ? Colors.greenAccent : Colors.deepPurpleAccent)
+            : Colors.white54;
 
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
@@ -944,8 +998,7 @@ class _InventoryChips extends StatelessWidget {
                 style: GoogleFonts.cinzel(
                   fontSize: 12,
                   color: isEquipped ? Colors.orangeAccent : Colors.white70,
-                  fontWeight:
-                      isEquipped ? FontWeight.bold : FontWeight.normal,
+                  fontWeight: isEquipped ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
               if (isEquipped) ...[
@@ -973,11 +1026,18 @@ class _XpBar extends StatelessWidget {
     final needed = level * 10;
     final progress = (xp / needed).clamp(0.0, 1.0);
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+        color: Colors.white.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -985,38 +1045,85 @@ class _XpBar extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                'Level $level',
-                style: GoogleFonts.cinzel(
-                  color: Colors.deepPurpleAccent,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'EXPERIENCE',
+                    style: GoogleFonts.cinzel(
+                      color: Colors.white38,
+                      fontSize: 9,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  Text(
+                    'Level $level',
+                    style: GoogleFonts.cinzel(
+                      color: Colors.white,
+                      fontWeight: FontWeight.w900,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
               ),
-              Text(
-                '$xp / $needed XP',
-                style: GoogleFonts.cinzel(
-                  color: Colors.white38,
-                  fontSize: 12,
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 4,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.deepPurpleAccent.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(10),
+                  border: Border.all(
+                    color: Colors.deepPurpleAccent.withValues(alpha: 0.2),
+                  ),
+                ),
+                child: Text(
+                  '$xp / $needed XP',
+                  style: GoogleFonts.cinzel(
+                    color: Colors.deepPurpleAccent,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(6),
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(begin: 0, end: progress),
-              duration: const Duration(milliseconds: 700),
-              curve: Curves.easeOutCubic,
-              builder: (_, value, __) => LinearProgressIndicator(
-                value: value,
-                minHeight: 8,
-                backgroundColor: Colors.white10,
-                valueColor:
-                    const AlwaysStoppedAnimation<Color>(Colors.deepPurpleAccent),
+          const SizedBox(height: 12),
+          Stack(
+            children: [
+              Container(
+                height: 12,
+                decoration: BoxDecoration(
+                  color: Colors.white10,
+                  borderRadius: BorderRadius.circular(6),
+                ),
               ),
-            ),
+              TweenAnimationBuilder<double>(
+                tween: Tween(begin: 0, end: progress),
+                duration: const Duration(milliseconds: 1000),
+                curve: Curves.easeOutExpo,
+                builder: (_, value, __) => FractionallySizedBox(
+                  widthFactor: value,
+                  child: Container(
+                    height: 12,
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Colors.deepPurple, Colors.deepPurpleAccent],
+                      ),
+                      borderRadius: BorderRadius.circular(6),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.deepPurpleAccent.withValues(alpha: 0.3),
+                          blurRadius: 8,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -1043,44 +1150,81 @@ class _VitalCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.07),
-        borderRadius: BorderRadius.circular(16),
+        color: color.withValues(alpha: 0.05),
+        borderRadius: BorderRadius.circular(20),
         border: Border.all(color: color.withValues(alpha: 0.2)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 8,
+            offset: const Offset(0, 4),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(icon, size: 14, color: color.withValues(alpha: 0.7)),
-              const SizedBox(width: 5),
               Text(
                 label,
                 style: GoogleFonts.cinzel(
                   color: color,
-                  fontWeight: FontWeight.bold,
+                  fontWeight: FontWeight.w900,
                   fontSize: 12,
+                  letterSpacing: 1.2,
                 ),
               ),
+              Icon(icon, size: 16, color: color.withValues(alpha: 0.5)),
             ],
           ),
-          const SizedBox(height: 5),
-          Text(
-            '$current / $max',
-            style: GoogleFonts.cinzel(
-              color: Colors.white,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
+          const SizedBox(height: 8),
+          RichText(
+            text: TextSpan(
+              children: [
+                TextSpan(
+                  text: '$current',
+                  style: GoogleFonts.cinzel(
+                    color: Colors.white,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                TextSpan(
+                  text: ' / $max',
+                  style: GoogleFonts.cinzel(
+                    color: Colors.white38,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 5,
-              backgroundColor: Colors.white10,
-              valueColor: AlwaysStoppedAnimation<Color>(color),
+          const SizedBox(height: 12),
+          Container(
+            height: 6,
+            width: double.infinity,
+            decoration: BoxDecoration(
+              color: Colors.white10,
+              borderRadius: BorderRadius.circular(3),
+            ),
+            child: FractionallySizedBox(
+              alignment: Alignment.centerLeft,
+              widthFactor: progress,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(3),
+                  boxShadow: [
+                    BoxShadow(
+                      color: color.withValues(alpha: 0.4),
+                      blurRadius: 4,
+                    ),
+                  ],
+                ),
+              ),
             ),
           ),
         ],
@@ -1103,30 +1247,43 @@ class _QuickStatCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 10),
+      padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.06),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: color.withValues(alpha: 0.18)),
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [color.withValues(alpha: 0.1), color.withValues(alpha: 0.02)],
+        ),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
       ),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 18),
-          const SizedBox(height: 4),
+          Container(
+            padding: const EdgeInsets.all(6),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color.withValues(alpha: 0.1),
+            ),
+            child: Icon(icon, color: color, size: 16),
+          ),
+          const SizedBox(height: 8),
           Text(
             value,
             style: GoogleFonts.cinzel(
               color: Colors.white,
-              fontWeight: FontWeight.bold,
-              fontSize: 16,
+              fontWeight: FontWeight.w900,
+              fontSize: 18,
             ),
           ),
+          const SizedBox(height: 2),
           Text(
-            label,
+            label.toUpperCase(),
             style: GoogleFonts.cinzel(
               color: Colors.white38,
-              fontSize: 9,
-              letterSpacing: 0.3,
+              fontSize: 8,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 1,
             ),
             textAlign: TextAlign.center,
             maxLines: 1,
@@ -1159,13 +1316,22 @@ class _AbilityScore extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.04),
-        borderRadius: BorderRadius.circular(14),
+        color: Colors.white.withValues(alpha: 0.03),
+        borderRadius: BorderRadius.circular(18),
         border: Border.all(
           color: canIncrease
-              ? Colors.blueAccent.withValues(alpha: 0.35)
-              : Colors.white.withValues(alpha: 0.07),
+              ? Colors.blueAccent.withValues(alpha: 0.4)
+              : Colors.white.withValues(alpha: 0.08),
+          width: canIncrease ? 1.5 : 1,
         ),
+        boxShadow: [
+          if (canIncrease)
+            BoxShadow(
+              color: Colors.blueAccent.withValues(alpha: 0.1),
+              blurRadius: 8,
+              spreadRadius: 1,
+            ),
+        ],
       ),
       child: Stack(
         children: [
@@ -1177,30 +1343,38 @@ class _AbilityScore extends StatelessWidget {
                   abbr,
                   style: GoogleFonts.cinzel(
                     color: Colors.white38,
-                    fontSize: 10,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 1,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: 1.5,
                   ),
                 ),
+                const SizedBox(height: 2),
                 Text(
                   '$value',
                   style: GoogleFonts.cinzel(
                     color: Colors.white,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w900,
                   ),
                 ),
+                const SizedBox(height: 4),
                 Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 1,
+                    horizontal: 8,
+                    vertical: 2,
                   ),
                   decoration: BoxDecoration(
-                    color: (_modifier >= 0
-                            ? Colors.greenAccent
-                            : Colors.redAccent)
-                        .withValues(alpha: 0.15),
-                    borderRadius: BorderRadius.circular(8),
+                    color:
+                        (_modifier >= 0 ? Colors.greenAccent : Colors.redAccent)
+                            .withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(
+                      color:
+                          (_modifier >= 0
+                                  ? Colors.greenAccent
+                                  : Colors.redAccent)
+                              .withValues(alpha: 0.2),
+                    ),
                   ),
                   child: Text(
                     _modifier >= 0 ? '+$_modifier' : '$_modifier',
@@ -1208,8 +1382,8 @@ class _AbilityScore extends StatelessWidget {
                       color: _modifier >= 0
                           ? Colors.greenAccent
                           : Colors.redAccent,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
                 ),
@@ -1226,15 +1400,15 @@ class _AbilityScore extends StatelessWidget {
                   statKey,
                 ),
                 child: Container(
-                  padding: const EdgeInsets.all(4),
+                  padding: const EdgeInsets.all(6),
                   decoration: const BoxDecoration(
                     color: Colors.blueAccent,
                     borderRadius: BorderRadius.only(
-                      topRight: Radius.circular(13),
+                      topRight: Radius.circular(16),
                       bottomLeft: Radius.circular(12),
                     ),
                   ),
-                  child: const Icon(Icons.add, size: 14, color: Colors.white),
+                  child: const Icon(Icons.add, size: 12, color: Colors.white),
                 ),
               ),
             ),
@@ -1285,23 +1459,31 @@ class _EmptyState extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.07)),
+        color: Colors.white.withValues(alpha: 0.02),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Column(
         children: [
-          Icon(icon, color: color, size: 28),
-          const SizedBox(height: 10),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: color.withValues(alpha: 0.05),
+            ),
+            child: Icon(icon, color: color.withValues(alpha: 0.4), size: 32),
+          ),
+          const SizedBox(height: 16),
           Text(
             message,
             textAlign: TextAlign.center,
             style: GoogleFonts.cinzel(
-              color: Colors.white38,
-              fontSize: 13,
+              color: Colors.white30,
+              fontSize: 12,
               height: 1.6,
+              fontWeight: FontWeight.w600,
             ),
           ),
         ],
@@ -1316,13 +1498,16 @@ class _SectionLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      title,
-      style: GoogleFonts.cinzel(
-        fontSize: 11,
-        color: Colors.white38,
-        fontWeight: FontWeight.bold,
-        letterSpacing: 2,
+    return Padding(
+      padding: const EdgeInsets.only(left: 4, bottom: 8, top: 8),
+      child: Text(
+        title.toUpperCase(),
+        style: GoogleFonts.cinzel(
+          fontSize: 10,
+          color: Colors.white24,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 2.5,
+        ),
       ),
     );
   }
@@ -1352,11 +1537,12 @@ class _InfoRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 14),
-      margin: const EdgeInsets.only(bottom: 8),
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+      margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.03),
-        borderRadius: BorderRadius.circular(10),
+        color: Colors.white.withValues(alpha: 0.02),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -1365,15 +1551,16 @@ class _InfoRow extends StatelessWidget {
             label,
             style: GoogleFonts.cinzel(
               color: Colors.white38,
-              fontSize: 13,
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
             ),
           ),
           Text(
             value,
             style: GoogleFonts.cinzel(
-              color: Colors.white,
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
+              color: Colors.white70,
+              fontSize: 12,
+              fontWeight: FontWeight.w900,
             ),
           ),
         ],
