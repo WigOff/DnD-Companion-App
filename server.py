@@ -28,7 +28,15 @@ async def lifespan(app: FastAPI):
     else:
         db_helper.client = AsyncIOMotorClient(mongodb_uri)
         db_helper.db = db_helper.client.dnd_database
-        print("✅ Connected to MongoDB Atlas")
+        
+        # Explicitly verify the connection at startup
+        try:
+            await db_helper.client.admin.command('ping')
+            print("✅ Successfully pinged MongoDB Atlas. Connection is active.")
+        except Exception as e:
+            print(f"❌ Could not connect to MongoDB Atlas: {e}")
+            print("💡 Check your IP Whitelist on Atlas and ensure your password is correct.")
+            db_helper.db = None
     
     try:
         yield
@@ -190,11 +198,17 @@ class Room:
 
     async def save(self):
         if db_helper.db is not None:
-            await db_helper.db.rooms.replace_one(
-                {"room_id": self.room_id},
-                {"room_id": self.room_id, "state": self.state},
-                upsert=True
-            )
+            try:
+                await db_helper.db.rooms.replace_one(
+                    {"room_id": self.room_id},
+                    {"room_id": self.room_id, "state": self.state},
+                    upsert=True
+                )
+                print(f"💾 Room {self.room_id} saved to MongoDB.")
+            except Exception as e:
+                print(f"❌ Error saving room {self.room_id} to MongoDB: {e}")
+        else:
+            print(f"⚠️ Cannot save room {self.room_id}: Database not connected.")
 
     async def broadcast(self, message_dict):
         final_data = json.dumps(message_dict)
@@ -225,21 +239,25 @@ class RoomManager:
         
         # Try loading from MongoDB
         if db_helper.db is not None:
-            room_doc = await db_helper.db.rooms.find_one({"room_id": room_id})
-            if room_doc:
-                state = room_doc["state"]
-                # Migrations if needed
-                for p in state.get("players", {}).values():
-                    p.setdefault("availablePoints", 0)
-                    p.setdefault("weapon", "")
-                    p.setdefault("gender", "male")
-                    p.setdefault("spells", [])
-                    p.setdefault("inventoryWeapons", [])
-                    p.setdefault("knownSpells", [])
-                
-                room = Room(room_id, state)
-                self.rooms[room_id] = room
-                return room
+            try:
+                room_doc = await db_helper.db.rooms.find_one({"room_id": room_id})
+                if room_doc:
+                    print(f"📂 Room {room_id} loaded from MongoDB.")
+                    state = room_doc["state"]
+                    # Migrations if needed
+                    for p in state.get("players", {}).values():
+                        p.setdefault("availablePoints", 0)
+                        p.setdefault("weapon", "")
+                        p.setdefault("gender", "male")
+                        p.setdefault("spells", [])
+                        p.setdefault("inventoryWeapons", [])
+                        p.setdefault("knownSpells", [])
+                    
+                    room = Room(room_id, state)
+                    self.rooms[room_id] = room
+                    return room
+            except Exception as e:
+                print(f"❌ Error loading room {room_id} from MongoDB: {e}")
         return None
 
     async def create_room(self):
