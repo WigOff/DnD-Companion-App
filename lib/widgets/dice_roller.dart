@@ -133,8 +133,9 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
 
     _pulseCtrl.repeat(reverse: true);
     _rollTimer = Timer.periodic(const Duration(milliseconds: 55), (_) {
-      if (mounted)
+      if (mounted) {
         setState(() => _displayNumber = _rng.nextInt(_selectedSides) + 1);
+      }
     });
 
     Future.delayed(const Duration(seconds: 5), () {
@@ -147,9 +148,9 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
     _pulseCtrl.stop();
 
     final finalResult = result ?? (_rng.nextInt(_selectedSides) + 1);
-    if (_selectedSides == 20 && finalResult != 1)
+    if (_selectedSides == 20 && finalResult != 1) {
       _revealCtrl.value = 0.0;
-    else if (_selectedSides != 20)
+    } else if (_selectedSides != 20)
       _revealCtrl.value = 0.0;
 
     setState(() {
@@ -234,13 +235,14 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
         ];
       }
     }
-    if (_isRolling)
+    if (_isRolling) {
       return [
         BoxShadow(
           color: Colors.deepPurpleAccent.withOpacity(0.4),
           blurRadius: 20,
         ),
       ];
+    }
     return [];
   }
 
@@ -348,9 +350,9 @@ class _DiceRollerState extends State<DiceRoller> with TickerProviderStateMixin {
                 ]),
                 builder: (context, _) {
                   double scale = 1.0;
-                  if (_isRolling)
+                  if (_isRolling) {
                     scale = _pulseAnim.value;
-                  else if (_result != null &&
+                  } else if (_result != null &&
                       (_selectedSides != 20 || _result != 1))
                     scale = _revealAnim.value;
 

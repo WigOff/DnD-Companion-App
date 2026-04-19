@@ -631,7 +631,7 @@ class _WeaponSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DropdownButtonFormField<String>(
-            value: live.weapon.isNotEmpty ? live.weapon : null,
+            initialValue: live.weapon.isNotEmpty ? live.weapon : null,
             dropdownColor: const Color(0xFF1A0A2E),
             isExpanded: true,
             style: GoogleFonts.cinzel(color: Colors.white, fontSize: 13),
@@ -746,7 +746,7 @@ class _SpellSection extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DropdownButtonFormField<String>(
-            value: validSpell,
+            initialValue: validSpell,
             dropdownColor: const Color(0xFF1A0A2E),
             isExpanded: true,
             style: GoogleFonts.cinzel(color: Colors.white, fontSize: 13),
@@ -1104,7 +1104,7 @@ class _XpBar extends StatelessWidget {
                 tween: Tween(begin: 0, end: progress),
                 duration: const Duration(milliseconds: 1000),
                 curve: Curves.easeOutExpo,
-                builder: (_, value, __) => FractionallySizedBox(
+                builder: (_, value, _) => FractionallySizedBox(
                   widthFactor: value,
                   child: Container(
                     height: 12,

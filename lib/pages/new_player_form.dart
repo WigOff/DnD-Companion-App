@@ -23,6 +23,7 @@ class _NewPlayerFormState extends State<NewPlayerForm> {
   String playerClass = kAvailableClasses.first;
   String subclass = 'None';
   String subclassDescription = '';
+  bool isMale = true;
 
   int str = 14, dex = 10, con = 14, intl = 6, wis = 8, cha = 8;
 
@@ -187,7 +188,65 @@ class _NewPlayerFormState extends State<NewPlayerForm> {
                   .toList(),
               onChanged: (v) => setState(() => race = v!),
             ),
-            const SizedBox(height: 12),
+            const SizedBox(height: 24),
+
+            // Gender Selection Slider
+            Column(
+              children: [
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.male,
+                      color: isMale ? Colors.blueAccent : Colors.white24,
+                    ),
+                    const SizedBox(width: 8),
+                    SizedBox(
+                      width: 120,
+                      child: SliderTheme(
+                        data: SliderTheme.of(context).copyWith(
+                          trackHeight: 2,
+                          thumbShape: const RoundSliderThumbShape(
+                            enabledThumbRadius: 8,
+                          ),
+                          overlayColor: Colors.deepPurpleAccent.withOpacity(
+                            0.2,
+                          ),
+                          activeTrackColor: Colors.deepPurpleAccent,
+                          inactiveTrackColor: Colors.white10,
+                        ),
+                        child: Slider(
+                          value: isMale ? 0.0 : 1.0,
+                          min: 0.0,
+                          max: 1.0,
+                          divisions: 1,
+                          onChanged: (v) {
+                            setState(() => isMale = v < 0.5);
+                          },
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.female,
+                      color: !isMale ? Colors.pinkAccent : Colors.white24,
+                    ),
+                  ],
+                ),
+                Text(
+                  isMale ? 'MALE' : 'FEMALE',
+                  style: GoogleFonts.cinzel(
+                    fontSize: 10,
+                    letterSpacing: 2,
+                    color: Colors.white38,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 40),
+
             // Race Portrait
             Center(
               child: Container(
@@ -219,15 +278,18 @@ class _NewPlayerFormState extends State<NewPlayerForm> {
                     shape: BoxShape.circle,
                     image: DecorationImage(
                       image: AssetImage(
-                        'assets/images/races/${race.toLowerCase().replaceAll('-', '_')}.png',
+                        'assets/images/races/${race.toLowerCase().replaceAll('-', '_')}_${isMale ? 'male' : 'female'}.png',
                       ),
                       fit: BoxFit.cover,
+                      onError: (exception, stackTrace) {
+                        // Fallback to original image if gender-specific is missing
+                      },
                     ),
                   ),
                 ),
               ),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: 32),
             const SizedBox(height: 12),
             DropdownButtonFormField<String>(
               initialValue: playerClass,
@@ -258,7 +320,7 @@ class _NewPlayerFormState extends State<NewPlayerForm> {
 
             // Subclass Selection
             DropdownButtonFormField<String>(
-              value: subclass == 'None' ? null : subclass,
+              initialValue: subclass == 'None' ? null : subclass,
               dropdownColor: const Color(0xFF1A0A2E),
               style: GoogleFonts.cinzel(color: Colors.white, fontSize: 13),
               decoration: _inputDeco('Subclass', Icons.workspace_premium),
@@ -271,8 +333,7 @@ class _NewPlayerFormState extends State<NewPlayerForm> {
                 setState(() {
                   subclass = v!;
                   subclassDescription =
-                      kClassInfo[playerClass]
-                          ?.subclasses
+                      kClassInfo[playerClass]?.subclasses
                           .firstWhere((s) => s.name == v)
                           .description ??
                       '';

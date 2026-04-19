@@ -597,7 +597,7 @@ class _GameMasterState extends State<GameMaster> with TickerProviderStateMixin {
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      value: _rewardPlayerId,
+                      initialValue: _rewardPlayerId,
                       dropdownColor: const Color(0xFF1A0A2E),
                       style: GoogleFonts.cinzel(
                         color: Colors.white,
@@ -785,7 +785,7 @@ class _GameMasterState extends State<GameMaster> with TickerProviderStateMixin {
                     ),
                     const SizedBox(height: 8),
                     DropdownButtonFormField<String>(
-                      value: _rewardItem,
+                      initialValue: _rewardItem,
                       dropdownColor: const Color(0xFF1A0A2E),
                       style: GoogleFonts.cinzel(
                         color: Colors.white,

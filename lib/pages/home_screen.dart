@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:dnd_app/pages/join_game.dart';
 import 'package:dnd_app/pages/game_master.dart';
 import 'package:dnd_app/pages/room_entry_page.dart';
 import 'package:dnd_app/providers/player_provider.dart';
