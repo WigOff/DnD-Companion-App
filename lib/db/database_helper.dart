@@ -20,16 +20,18 @@ class DatabaseHelper {
 
     return await openDatabase(
       path,
-      version: 6,
+      version: 7,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
   }
 
   Future _onUpgrade(Database db, int oldVersion, int newVersion) async {
-    if (oldVersion < 6) {
-      await db.execute('DROP TABLE IF EXISTS players');
-      await _createDB(db, newVersion);
+    if (oldVersion < 7) {
+      // Adding the missing 'gender' column
+      await db.execute(
+        'ALTER TABLE players ADD COLUMN gender TEXT NOT NULL DEFAULT "male"',
+      );
     }
   }
 
@@ -60,6 +62,7 @@ class DatabaseHelper {
         subclass TEXT NOT NULL,
         subclassDescription TEXT NOT NULL,
         weapon TEXT NOT NULL,
+        gender TEXT NOT NULL,
         spells TEXT NOT NULL,
         inventoryWeapons TEXT NOT NULL,
         knownSpells TEXT NOT NULL
